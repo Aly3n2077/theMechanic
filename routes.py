@@ -83,7 +83,7 @@ def register_routes(app):
                 mechanic_id=mechanic_id,
                 service_id=form.service_id.data,
                 vehicle_id=form.vehicle_id.data,
-                booking_date=form.booking_date.data.strftime('%Y-%m-%d'),
+                booking_date=form.booking_date.data.strftime('%Y-%m-%d') if form.booking_date.data else None,
                 booking_time=form.booking_time.data,
                 issue_description=form.issue_description.data
             )
@@ -123,7 +123,7 @@ def register_routes(app):
             return redirect(url_for('login'))
         
         user = data.get_user_by_id(session['user_id'])
-        if user.is_mechanic:
+        if user and user.is_mechanic:
             return redirect(url_for('mechanic_dashboard'))
         else:
             return redirect(url_for('customer_dashboard'))
@@ -135,7 +135,7 @@ def register_routes(app):
             return redirect(url_for('login'))
         
         user = data.get_user_by_id(session['user_id'])
-        if user.is_mechanic:
+        if user and user.is_mechanic:
             return redirect(url_for('mechanic_dashboard'))
         
         bookings = data.get_bookings_by_customer(session['user_id'])

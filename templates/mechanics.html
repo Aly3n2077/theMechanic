@@ -20,21 +20,20 @@
                     <label for="service-filter" class="form-label">Filter by Service</label>
                     <select id="service-filter" class="form-select">
                         <option value="all" selected>All Services</option>
-                        <option value="1">Oil Change</option>
-                        <option value="2">Brake Inspection</option>
-                        <option value="3">Engine Diagnostics</option>
-                        <option value="5">Battery Replacement</option>
-                        <option value="8">Wheel Alignment</option>
+                        {% for service in services %}
+                        <option value="{{ service.id }}">{{ service.name }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-4">
                     <label for="location-filter" class="form-label">Location</label>
                     <select id="location-filter" class="form-select">
                         <option value="all" selected>All Locations</option>
-                        <option value="central">Harare Central</option>
-                        <option value="avondale">Avondale</option>
-                        <option value="borrowdale">Borrowdale</option>
-                        <option value="eastlea">Eastlea</option>
+                        <option value="harare-central">Harare Central</option>
+                        <option value="avondale-harare">Avondale, Harare</option>
+                        <option value="borrowdale-harare">Borrowdale, Harare</option>
+                        <option value="eastlea-harare">Eastlea, Harare</option>
+                        <option value="mabelreign-harare">Mabelreign, Harare</option>
                     </select>
                 </div>
                 <div class="col-md-4">
