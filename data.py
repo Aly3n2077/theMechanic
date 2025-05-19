@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime, timedelta
-from models import Service, Mechanic, User, Vehicle, Booking, TimeSlot
+from models import Service, Mechanic, User, Vehicle, Booking, TimeSlot, Review
 from werkzeug.security import generate_password_hash
 
 # In-memory data storage
@@ -10,10 +10,11 @@ mechanics = []
 users = []
 vehicles = []
 bookings = []
+reviews = []
 
 # Initialize with some data
 def init_data():
-    global services, mechanics, users, vehicles, bookings
+    global services, mechanics, users, vehicles, bookings, reviews, service_keywords
     
     # Services
     services = [
@@ -307,6 +308,168 @@ def update_booking_status(booking_id, new_status):
         booking.status = new_status
         return booking
     return None
+
+def get_reviews_by_mechanic(mechanic_id):
+    """Get all reviews for a specific mechanic"""
+    return [r for r in reviews if r.mechanic_id == mechanic_id]
+
+def get_review_by_booking(booking_id):
+    """Get the review for a specific booking if it exists"""
+    return next((r for r in reviews if r.booking_id == booking_id), None)
+
+def create_review(booking_id, customer_id, mechanic_id, rating, comment):
+    """Create a new review for a completed booking"""
+    # Validate that this booking exists, is completed, and belongs to this customer
+    booking = next((b for b in bookings if b.id == booking_id and 
+                   b.customer_id == customer_id and 
+                   b.status == "Completed"), None)
+    
+    if not booking:
+        return None
+    
+    # Check if this booking already has a review
+    existing_review = get_review_by_booking(booking_id)
+    if existing_review:
+        return None
+    
+    # Create the review
+    review_id = max([r.id for r in reviews], default=0) + 1
+    customer = get_user_by_id(customer_id)
+    customer_name = customer.name if customer else ""
+    
+    new_review = Review(
+        id=review_id,
+        booking_id=booking_id,
+        customer_id=customer_id,
+        mechanic_id=mechanic_id,
+        rating=rating,
+        comment=comment,
+        created_at=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        customer_name=customer_name
+    )
+    
+    reviews.append(new_review)
+    
+    # Mark the booking as having a review
+    booking.has_review = True
+    
+    # Update mechanic's rating
+    update_mechanic_rating(mechanic_id)
+    
+    return new_review
+
+def update_mechanic_rating(mechanic_id):
+    """Update a mechanic's overall rating based on all their reviews"""
+    mechanic = get_mechanic_by_id(mechanic_id)
+    if not mechanic:
+        return
+    
+    mechanic_reviews = get_reviews_by_mechanic(mechanic_id)
+    if not mechanic_reviews:
+        return
+    
+    # Calculate new average rating
+    total_rating = sum(review.rating for review in mechanic_reviews)
+    avg_rating = round(total_rating / len(mechanic_reviews), 1)
+    
+    # Update mechanic's rating and review count
+    mechanic.rating = avg_rating
+    mechanic.review_count = len(mechanic_reviews)
+
+# Service recommendation system - maps issue keywords to service IDs
+service_keywords = {
+    # Engine related
+    "engine": [3, 19],  # Engine Diagnostics, Check Engine Light
+    "light": [10, 19],  # Headlight Replacement, Check Engine Light
+    "check engine": [19],  # Check Engine Light
+    "warning": [19],  # Check Engine Light
+    "performance": [3, 14],  # Engine Diagnostics, Fuel System Cleaning
+    "slow": [3, 14],  # Engine Diagnostics, Fuel System Cleaning
+    "stalling": [3, 15],  # Engine Diagnostics, Starter Replacement
+    
+    # Maintenance
+    "oil": [1],  # Oil Change 
+    "maintenance": [1, 4, 7, 9, 12],  # Various maintenance services
+    "regular": [1, 4, 7, 9, 12],  # Various maintenance services
+    "fluid": [1, 7, 9],  # Oil Change, Transmission Fluid, Radiator Flush
+    
+    # Brakes
+    "brake": [2, 11],  # Brake Inspection, Brake Pad Replacement
+    "stopping": [2, 11],  # Brake-related issues
+    "squeaking": [2, 11, 13],  # Brake or suspension issues
+    "grinding": [2, 11],  # Brake issues
+    
+    # Tires and alignment
+    "tire": [4],  # Tire Rotation
+    "alignment": [8],  # Wheel Alignment
+    "pulling": [8],  # Wheel Alignment issues
+    "vibration": [8, 13],  # Wheel Alignment, Suspension issues
+    
+    # Air conditioning
+    "ac": [6],  # AC Service
+    "air": [6],  # AC Service
+    "cold": [6],  # AC Service
+    "hot": [6, 9],  # AC Service, Radiator Flush
+    "cooling": [9],  # Radiator Flush
+    
+    # Electrical
+    "battery": [5],  # Battery Replacement
+    "start": [5, 15],  # Battery or Starter issues
+    "power": [5, 18],  # Battery, Power Window issues
+    "electric": [5, 16, 18],  # Electrical issues
+    "window": [18],  # Power Window Repair
+    "alternator": [16],  # Alternator Replacement
+    "charging": [16],  # Alternator issues
+    
+    # Transmission
+    "transmission": [7],  # Transmission Fluid Change
+    "gear": [7],  # Transmission issues
+    "shifting": [7],  # Transmission issues
+    
+    # Exhaust
+    "exhaust": [17],  # Exhaust System Repair
+    "smoke": [17, 3],  # Exhaust issues or Engine Diagnostics
+    "loud": [17],  # Exhaust issues
+    
+    # General
+    "noise": [3, 13, 17],  # Various potential issues
+    "leak": [1, 7, 9, 17],  # Various fluid leaks
+    "inspection": [2, 20],  # Brake Inspection or Pre-Purchase
+    "buying": [20],  # Pre-Purchase Inspection
+    "new car": [20],  # Pre-Purchase Inspection
+    "used car": [20],  # Pre-Purchase Inspection
+}
+
+def recommend_services(issue_description):
+    """
+    Analyze issue description and recommend appropriate services
+    Returns a list of service IDs sorted by relevance
+    """
+    if not issue_description:
+        return []
+        
+    # Convert to lowercase for case-insensitive matching
+    issue_text = issue_description.lower()
+    
+    # Track matched services and their relevance score
+    service_matches = {}
+    
+    for keyword, service_ids in service_keywords.items():
+        if keyword in issue_text:
+            # How relevant is this keyword (based on length - longer keywords are more specific)
+            relevance = len(keyword)
+            
+            for service_id in service_ids:
+                if service_id in service_matches:
+                    service_matches[service_id] += relevance
+                else:
+                    service_matches[service_id] = relevance
+    
+    # Sort services by relevance score (descending)
+    recommended_services = sorted(service_matches.items(), key=lambda x: x[1], reverse=True)
+    
+    # Return just the service IDs, in order of relevance
+    return [service_id for service_id, score in recommended_services]
 
 # Initialize data when this module is imported
 init_data()

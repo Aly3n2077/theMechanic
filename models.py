@@ -69,3 +69,15 @@ class Booking:
     mechanic_name: str = ""
     service_name: str = ""
     vehicle_details: str = ""
+    has_review: bool = False
+    
+@dataclass
+class Review:
+    id: int
+    booking_id: int
+    customer_id: int
+    mechanic_id: int
+    rating: float  # 1-5 star rating
+    comment: str
+    created_at: str
+    customer_name: str = ""
