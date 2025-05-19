@@ -160,10 +160,10 @@ def register_routes(app):
             return redirect(url_for('login'))
         
         user = data.get_user_by_id(session['user_id'])
-        if not user.is_mechanic:
+        if not user or not user.is_mechanic:
             return redirect(url_for('customer_dashboard'))
         
-        mechanic = data.get_mechanic_by_id(user.mechanic_id)
+        mechanic = data.get_mechanic_by_id(user.mechanic_id) if user.mechanic_id else None
         if not mechanic:
             flash('Mechanic profile not found.', 'danger')
             return redirect(url_for('index'))
@@ -192,8 +192,9 @@ def register_routes(app):
         
         if form.validate_on_submit():
             user = data.get_user_by_email(form.email.data)
+            password_input = form.password.data if form.password.data else ""
             
-            if user and check_password_hash(user.password_hash, form.password.data):
+            if user and check_password_hash(user.password_hash, password_input):
                 session['user_id'] = user.id
                 next_page = request.args.get('next')
                 
@@ -271,8 +272,10 @@ def register_routes(app):
         if 'user_id' not in session:
             return jsonify({'success': False, 'message': 'Not logged in'}), 401
         
-        booking_id = request.json.get('booking_id')
-        new_status = request.json.get('status')
+        # Safely get JSON data
+        json_data = request.get_json(silent=True) or {}
+        booking_id = json_data.get('booking_id')
+        new_status = json_data.get('status')
         
         if not booking_id or not new_status:
             return jsonify({'success': False, 'message': 'Missing data'}), 400

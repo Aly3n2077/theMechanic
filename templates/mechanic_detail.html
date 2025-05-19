@@ -46,27 +46,78 @@
             
             <!-- Services -->
             <div class="card mb-4">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="mb-0">Services Offered</h4>
+                    <span class="badge bg-primary">{{ services|length }} services</span>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        {% for service in services %}
-                        <div class="col-md-6 mb-3">
-                            <div class="d-flex align-items-center">
-                                {% if service.category == 'Maintenance' %}
-                                    <i class="fas fa-oil-can text-primary me-3 fa-2x"></i>
-                                {% elif service.category == 'Repair' %}
-                                    <i class="fas fa-tools text-primary me-3 fa-2x"></i>
-                                {% elif service.category == 'Diagnostics' %}
-                                    <i class="fas fa-laptop-code text-primary me-3 fa-2x"></i>
-                                {% else %}
-                                    <i class="fas fa-car-battery text-primary me-3 fa-2x"></i>
-                                {% endif %}
-                                <div>
-                                    <h5 class="mb-0">{{ service.name }}</h5>
-                                    <p class="text-muted mb-0">${{ service.price|round(2) }} · {{ service.duration_minutes }} min</p>
+                    <!-- Group services by category -->
+                    {% set categories = services|groupby('category') %}
+                    
+                    <ul class="nav nav-pills mb-4" id="service-tabs" role="tablist">
+                        <li class="nav-item me-2" role="presentation">
+                            <button class="nav-link active" id="all-tab" data-bs-toggle="pill" data-bs-target="#all" type="button" role="tab">All Services</button>
+                        </li>
+                        {% for category, items in categories %}
+                        <li class="nav-item me-2" role="presentation">
+                            <button class="nav-link" id="{{ category|lower }}-tab" data-bs-toggle="pill" data-bs-target="#{{ category|lower }}" type="button" role="tab">{{ category }} ({{ items|length }})</button>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    
+                    <div class="tab-content">
+                        <!-- All services tab -->
+                        <div class="tab-pane fade show active" id="all" role="tabpanel">
+                            <div class="row">
+                                {% for service in services %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex align-items-center">
+                                        {% if service.category == 'Maintenance' %}
+                                            <i class="fas fa-oil-can text-primary me-3 fa-2x"></i>
+                                        {% elif service.category == 'Repair' %}
+                                            <i class="fas fa-tools text-primary me-3 fa-2x"></i>
+                                        {% elif service.category == 'Diagnostics' %}
+                                            <i class="fas fa-laptop-code text-primary me-3 fa-2x"></i>
+                                        {% else %}
+                                            <i class="fas fa-car-battery text-primary me-3 fa-2x"></i>
+                                        {% endif %}
+                                        <div>
+                                            <h5 class="mb-0">{{ service.name }}</h5>
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge bg-light text-dark me-2">{{ service.category }}</span>
+                                                <p class="text-muted mb-0">${{ service.price|round(2) }} · {{ service.duration_minutes }} min</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Category tabs -->
+                        {% for category, items in categories %}
+                        <div class="tab-pane fade" id="{{ category|lower }}" role="tabpanel">
+                            <div class="row">
+                                {% for service in items %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex align-items-center">
+                                        {% if service.category == 'Maintenance' %}
+                                            <i class="fas fa-oil-can text-primary me-3 fa-2x"></i>
+                                        {% elif service.category == 'Repair' %}
+                                            <i class="fas fa-tools text-primary me-3 fa-2x"></i>
+                                        {% elif service.category == 'Diagnostics' %}
+                                            <i class="fas fa-laptop-code text-primary me-3 fa-2x"></i>
+                                        {% else %}
+                                            <i class="fas fa-car-battery text-primary me-3 fa-2x"></i>
+                                        {% endif %}
+                                        <div>
+                                            <h5 class="mb-0">{{ service.name }}</h5>
+                                            <p class="text-muted mb-0">${{ service.price|round(2) }} · {{ service.duration_minutes }} min</p>
+                                            <small class="text-muted">{{ service.description|truncate(70) }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
                             </div>
                         </div>
                         {% endfor %}
