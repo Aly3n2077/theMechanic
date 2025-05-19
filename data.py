@@ -318,13 +318,15 @@ def create_booking(customer_id, mechanic_id, service_id, vehicle_id, booking_dat
     )
     
     # Notification for mechanic
-    create_notification(
-        get_user_by_mechanic_id(mechanic_id).id if get_user_by_mechanic_id(mechanic_id) else mechanic_id,
-        "New Booking Request",
-        f"{customer_name} has requested your services for {service_name} on {booking_date} at {booking_time}.",
-        "booking",
-        booking_id
-    )
+    mechanic_user = get_user_by_mechanic_id(mechanic_id)
+    if mechanic_user:
+        create_notification(
+            mechanic_user.id,
+            "New Booking Request",
+            f"{customer_name} has requested your services for {service_name} on {booking_date} at {booking_time}.",
+            "booking",
+            booking_id
+        )
     
     return new_booking
 

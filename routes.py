@@ -476,3 +476,89 @@ def register_routes(app):
             'success': True, 
             'recommendations': services_data
         })
+        
+    @app.route('/api/notifications/mark_read', methods=['POST'])
+    def mark_notification_read():
+        """API endpoint to mark a notification as read"""
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'message': 'Not logged in'}), 401
+            
+        json_data = request.get_json(silent=True) or {}
+        notification_id = json_data.get('notification_id')
+        
+        if not notification_id:
+            return jsonify({'success': False, 'message': 'Missing notification ID'}), 400
+            
+        # Verify this notification belongs to the current user
+        notifications = data.get_notifications_by_user(session['user_id'])
+        notification = next((n for n in notifications if n.id == int(notification_id)), None)
+        
+        if not notification:
+            return jsonify({'success': False, 'message': 'Notification not found'}), 404
+            
+        # Mark as read
+        result = data.mark_notification_read(int(notification_id))
+        
+        if result:
+            return jsonify({'success': True, 'message': 'Notification marked as read'})
+        else:
+            return jsonify({'success': False, 'message': 'Failed to mark notification as read'}), 500
+            
+    @app.route('/api/find_mechanic', methods=['POST'])
+    def find_mechanic():
+        """API endpoint to find the best mechanic for a specific issue"""
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'message': 'Not logged in'}), 401
+            
+        json_data = request.get_json(silent=True) or {}
+        issue_description = json_data.get('issue_description', '')
+        location = json_data.get('location', '')
+        preferred_date = json_data.get('preferred_date', '')
+        
+        if not issue_description:
+            return jsonify({'success': False, 'message': 'No issue description provided'}), 400
+        
+        # Get recommended services for this issue
+        recommended_service_ids = data.recommend_services(issue_description)
+        if not recommended_service_ids:
+            return jsonify({'success': False, 'message': 'No suitable services found for this issue'}), 404
+            
+        # Find mechanics who can perform these services
+        mechanics = data.get_mechanics()
+        suitable_mechanics = []
+        
+        for mechanic in mechanics:
+            # Check if mechanic offers any of the recommended services
+            matching_services = [sid for sid in recommended_service_ids if sid in mechanic.services]
+            if matching_services:
+                # Calculate a match score based on multiple factors
+                score = len(matching_services) * 10  # Number of matching services
+                score += mechanic.rating * 5         # Higher rating is better
+                score += mechanic.experience_years   # More experience is better
+                
+                # Location matching (if provided)
+                if location and location.lower() in mechanic.location.lower():
+                    score += 15  # Location bonus
+                
+                # Format the response data
+                mechanic_data = {
+                    'id': mechanic.id,
+                    'name': mechanic.name,
+                    'specialization': mechanic.specialization,
+                    'experience_years': mechanic.experience_years,
+                    'rating': mechanic.rating,
+                    'review_count': mechanic.review_count,
+                    'location': mechanic.location,
+                    'profile_image': mechanic.profile_image,
+                    'matching_services': matching_services,
+                    'match_score': score
+                }
+                suitable_mechanics.append(mechanic_data)
+        
+        # Sort by match score, descending
+        suitable_mechanics.sort(key=lambda m: m['match_score'], reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'mechanics': suitable_mechanics[:5]  # Return top 5 matches
+        })
