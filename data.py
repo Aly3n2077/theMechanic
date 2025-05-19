@@ -27,6 +27,16 @@ def init_data():
         Service(8, "Wheel Alignment", "Computer-aided alignment of wheels", 90.00, 60, "Repair"),
         Service(9, "Radiator Flush", "Coolant system flush and refill", 75.00, 45, "Maintenance"),
         Service(10, "Headlight Replacement", "Replace headlight bulbs or assemblies", 40.00, 30, "Repair"),
+        Service(11, "Brake Pad Replacement", "Replace worn brake pads and inspect rotors", 120.00, 90, "Repair"),
+        Service(12, "Spark Plug Replacement", "Remove and replace spark plugs", 95.00, 60, "Maintenance"),
+        Service(13, "Suspension Repair", "Diagnosis and repair of suspension components", 150.00, 120, "Repair"),
+        Service(14, "Fuel System Cleaning", "Clean fuel injectors and system for improved performance", 85.00, 60, "Maintenance"),
+        Service(15, "Starter Replacement", "Remove and replace faulty starter motor", 130.00, 90, "Repair"),
+        Service(16, "Alternator Replacement", "Replace failing alternator", 160.00, 90, "Repair"),
+        Service(17, "Exhaust System Repair", "Diagnosis and repair of exhaust system leaks or damage", 110.00, 75, "Repair"),
+        Service(18, "Power Window Repair", "Fix non-functioning power windows", 95.00, 60, "Repair"),
+        Service(19, "Check Engine Light Diagnosis", "Advanced diagnostics for check engine warnings", 85.00, 60, "Diagnostics"),
+        Service(20, "Pre-Purchase Inspection", "Comprehensive vehicle inspection before buying", 120.00, 90, "Diagnostics"),
     ]
     
     # Create availability schedule
@@ -45,34 +55,42 @@ def init_data():
         Mechanic(
             1, "Michael Johnson", "michael@hararemechanics.com", "+263775123456", 
             "Engine Specialist", 8, 
-            "Expert in diagnosing and repairing engine issues with 8 years of experience.",
+            "Expert in diagnosing and repairing engine issues with 8 years of experience. Specializes in performance tuning and fuel system optimization.",
             "Harare Central",
             "https://pixabay.com/get/g41825f713016a15af65a97f2d831c387e6635c0e3f755e41bf871505158f7b45bf0e9ae870241ca134405cc24ee87458de469d0e4a6f24eba6610a3957a12a43_1280.jpg",
-            4.8, 56, [1, 3, 7], default_availability
+            4.8, 56, [1, 3, 7, 12, 14, 19], default_availability
         ),
         Mechanic(
             2, "Grace Moyo", "grace@hararemechanics.com", "+263775234567",
             "Electrical Systems", 5,
-            "Specialized in automotive electrical systems and computer diagnostics.",
+            "Specialized in automotive electrical systems and computer diagnostics. Expert in troubleshooting complex electronic issues.",
             "Avondale, Harare",
             "https://pixabay.com/get/gd9925ae067b218944a0a8142738fcc68fe6a6fde36d9c8b38fe289c91bfc0f9b74b9ce2aeb86a28baec8da299e00ba8783eb34d9d4c5020a049b4436e864604c_1280.jpg",
-            4.6, 42, [3, 5, 6, 10], default_availability
+            4.6, 42, [3, 5, 6, 10, 15, 16, 18, 19], default_availability
         ),
         Mechanic(
             3, "David Mapondera", "david@hararemechanics.com", "+263775345678",
-            "Brake Specialist", 6,
-            "Expert in brake system repairs and maintenance. Certified technician.",
+            "Brake & Suspension Specialist", 6,
+            "Expert in brake system repairs and suspension work. Certified technician with advanced training in vehicle dynamics.",
             "Borrowdale, Harare",
             "https://pixabay.com/get/g2b44b9419edd576516cb8f0e17729ca8129ffc5de274c74a5c9706796e98e38b6e01197f1864b3d9f092bc0fa577e191cbb67f3637a5066f794e7409840737dc_1280.jpg",
-            4.9, 68, [2, 4, 8], default_availability
+            4.9, 68, [2, 4, 8, 11, 13, 17], default_availability
         ),
         Mechanic(
             4, "Tendai Mutasa", "tendai@hararemechanics.com", "+263775456789",
             "General Mechanic", 10,
-            "All-round mechanic with 10 years of experience in all aspects of car repair.",
+            "All-round mechanic with 10 years of experience in all aspects of car repair. Provides comprehensive vehicle inspection and maintenance services.",
             "Eastlea, Harare",
             "https://pixabay.com/get/g53f14e50f6526b37eecfda5e5e855bc2006f9ce27e3d789387c3cf752c7697aa1c1ede670fcbae8090960a5775105104a174737c87830e830f746e4a4f77c342_1280.jpg",
-            4.7, 89, [1, 2, 4, 7, 9], default_availability
+            4.7, 89, [1, 2, 4, 7, 9, 20], default_availability
+        ),
+        Mechanic(
+            5, "Chiedza Mupita", "chiedza@hararemechanics.com", "+263775567890",
+            "Transmission Specialist", 7,
+            "Specializes in manual and automatic transmission repairs. Expert in diagnosing complex drivetrain issues.",
+            "Mabelreign, Harare",
+            "https://pixabay.com/get/g20ef4ebfa2a1456a2a21e5522f5db72dd7f9a3c9c4c9fe4b63d3c25ff8e50a7a0bd02a2a72db0f57195fd99d2398c35eb5f6c1d8ffd6abfc3aeb48f52afee5dc_1280.jpg",
+            4.7, 45, [3, 7, 12, 15, 16, 19], default_availability
         )
     ]
     
@@ -87,7 +105,9 @@ def init_data():
         User(4, "David Mapondera", "david@hararemechanics.com", "+263775345678", 
              generate_password_hash("mechanic123"), True, 3),
         User(5, "Tendai Mutasa", "tendai@hararemechanics.com", "+263775456789", 
-             generate_password_hash("mechanic123"), True, 4)
+             generate_password_hash("mechanic123"), True, 4),
+        User(6, "Chiedza Mupita", "chiedza@hararemechanics.com", "+263775567890", 
+             generate_password_hash("mechanic123"), True, 5)
     ]
     
     # Vehicles

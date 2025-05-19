@@ -20,7 +20,8 @@ def register_routes(app):
     def mechanics_list():
         """List all mechanics"""
         mechanics = data.get_mechanics()
-        return render_template('mechanics.html', mechanics=mechanics)
+        services = data.get_services()
+        return render_template('mechanics.html', mechanics=mechanics, services=services)
     
     @app.route('/mechanics/<int:mechanic_id>')
     def mechanic_detail(mechanic_id):
