@@ -16,7 +16,7 @@ vehicles_for_sale = []
 
 # Initialize with some data
 def init_data():
-    global services, mechanics, users, vehicles, bookings, reviews, notifications, service_keywords
+    global services, mechanics, users, vehicles, bookings, reviews, notifications, vehicles_for_sale, service_keywords
     
     # Services
     services = [
@@ -632,6 +632,151 @@ def recommend_services(issue_description):
     
     # Return just the service IDs, in order of relevance
     return [service_id for service_id, score in recommended_services]
+
+# Functions for vehicle marketplace (car buying/selling)
+def get_vehicles_for_sale(filters=None):
+    """
+    Get all vehicles for sale, with optional filtering
+    
+    filters: dict with optional keys:
+        - make: filter by vehicle make
+        - model: filter by vehicle model
+        - min_year: minimum vehicle year
+        - max_year: maximum vehicle year
+        - min_price: minimum price
+        - max_price: maximum price
+        - condition: vehicle condition
+    """
+    filtered_vehicles = vehicles_for_sale.copy()
+    
+    if not filters:
+        return filtered_vehicles
+        
+    # Apply filters
+    if 'make' in filters and filters['make']:
+        filtered_vehicles = [v for v in filtered_vehicles if v.make.lower() == filters['make'].lower()]
+        
+    if 'model' in filters and filters['model']:
+        filtered_vehicles = [v for v in filtered_vehicles if v.model.lower() == filters['model'].lower()]
+        
+    if 'min_year' in filters and filters['min_year']:
+        filtered_vehicles = [v for v in filtered_vehicles if v.year >= int(filters['min_year'])]
+        
+    if 'max_year' in filters and filters['max_year']:
+        filtered_vehicles = [v for v in filtered_vehicles if v.year <= int(filters['max_year'])]
+        
+    if 'min_price' in filters and filters['min_price']:
+        filtered_vehicles = [v for v in filtered_vehicles if v.price >= float(filters['min_price'])]
+        
+    if 'max_price' in filters and filters['max_price']:
+        filtered_vehicles = [v for v in filtered_vehicles if v.price <= float(filters['max_price'])]
+        
+    if 'condition' in filters and filters['condition']:
+        filtered_vehicles = [v for v in filtered_vehicles if v.condition.lower() == filters['condition'].lower()]
+        
+    # By default, only show unsold vehicles
+    if 'show_sold' not in filters or not filters['show_sold']:
+        filtered_vehicles = [v for v in filtered_vehicles if not v.is_sold]
+        
+    return filtered_vehicles
+
+def get_vehicle_for_sale_by_id(vehicle_id):
+    """Get a vehicle listing by ID"""
+    return next((v for v in vehicles_for_sale if v.id == vehicle_id), None)
+
+def get_user_vehicle_listings(user_id):
+    """Get all vehicle listings for a specific user"""
+    return [v for v in vehicles_for_sale if v.seller_id == user_id]
+
+def create_vehicle_listing(seller_id, make, model, year, price, condition, mileage, color, 
+                           transmission, fuel_type, description, features=None, images=None):
+    """Create a new vehicle listing"""
+    # Generate a new ID
+    vehicle_id = max([v.id for v in vehicles_for_sale], default=0) + 1
+    
+    # Create the vehicle listing
+    new_listing = Vehicle4Sale(
+        id=vehicle_id,
+        seller_id=seller_id,
+        make=make,
+        model=model,
+        year=year,
+        price=price,
+        condition=condition,
+        mileage=mileage,
+        color=color,
+        transmission=transmission,
+        fuel_type=fuel_type,
+        description=description,
+        features=features or [],
+        images=images or [],
+        listing_date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        is_sold=False
+    )
+    
+    vehicles_for_sale.append(new_listing)
+    
+    # Notify the seller
+    create_notification(
+        user_id=seller_id,
+        title="Vehicle Listing Created",
+        message=f"Your listing for {make} {model} ({year}) has been created successfully.",
+        notification_type="marketplace",
+        related_id=vehicle_id
+    )
+    
+    return new_listing
+
+def update_vehicle_listing(vehicle_id, **kwargs):
+    """Update an existing vehicle listing"""
+    vehicle = get_vehicle_for_sale_by_id(vehicle_id)
+    if not vehicle:
+        return None
+        
+    # Update fields
+    for key, value in kwargs.items():
+        if hasattr(vehicle, key):
+            setattr(vehicle, key, value)
+            
+    return vehicle
+
+def mark_vehicle_as_sold(vehicle_id, buyer_id=None):
+    """Mark a vehicle as sold"""
+    vehicle = get_vehicle_for_sale_by_id(vehicle_id)
+    if not vehicle:
+        return None
+        
+    vehicle.is_sold = True
+    
+    # Notify the seller
+    create_notification(
+        user_id=vehicle.seller_id,
+        title="Vehicle Marked as Sold",
+        message=f"Your {vehicle.make} {vehicle.model} ({vehicle.year}) has been marked as sold.",
+        notification_type="marketplace",
+        related_id=vehicle_id
+    )
+    
+    # Notify the buyer if provided
+    if buyer_id:
+        create_notification(
+            user_id=buyer_id,
+            title="Vehicle Purchase Recorded",
+            message=f"Your purchase of {vehicle.make} {vehicle.model} ({vehicle.year}) has been recorded.",
+            notification_type="marketplace",
+            related_id=vehicle_id
+        )
+        
+    return vehicle
+
+def delete_vehicle_listing(vehicle_id):
+    """Delete a vehicle listing"""
+    vehicle = get_vehicle_for_sale_by_id(vehicle_id)
+    if not vehicle:
+        return False
+        
+    vehicles_for_sale.remove(vehicle)
+    return True
 
 # Initialize data when this module is imported
 init_data()
