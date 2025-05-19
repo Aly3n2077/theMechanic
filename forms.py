@@ -27,3 +27,10 @@ class BookingForm(FlaskForm):
     booking_date = DateField('Date', format='%Y-%m-%d', validators=[DataRequired()])
     booking_time = SelectField('Time', validators=[DataRequired()])
     issue_description = TextAreaField('Describe the issue', validators=[DataRequired(), Length(max=500)])
+    
+class ReviewForm(FlaskForm):
+    booking_id = HiddenField('Booking ID', validators=[DataRequired()])
+    mechanic_id = HiddenField('Mechanic ID', validators=[DataRequired()])
+    rating = SelectField('Rating', choices=[(1, '1 Star'), (2, '2 Stars'), (3, '3 Stars'), (4, '4 Stars'), (5, '5 Stars')], 
+                        coerce=int, validators=[DataRequired(), NumberRange(min=1, max=5)])
+    comment = TextAreaField('Your Review', validators=[DataRequired(), Length(min=10, max=500)])

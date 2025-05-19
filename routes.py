@@ -2,8 +2,9 @@ import os
 from flask import render_template, redirect, url_for, flash, request, session, jsonify
 from werkzeug.security import check_password_hash
 from datetime import datetime, timedelta
-from forms import LoginForm, RegistrationForm, VehicleForm, BookingForm
+from forms import LoginForm, RegistrationForm, VehicleForm, BookingForm, ReviewForm
 import data
+import utils
 
 def register_routes(app):
     
@@ -18,10 +19,41 @@ def register_routes(app):
     
     @app.route('/mechanics')
     def mechanics_list():
-        """List all mechanics"""
+        """List all mechanics with optional filtering"""
         mechanics = data.get_mechanics()
         services = data.get_services()
-        return render_template('mechanics.html', mechanics=mechanics, services=services)
+        
+        # Filter by service if provided
+        service_id = request.args.get('service_id')
+        if service_id and service_id.isdigit():
+            service_id = int(service_id)
+            mechanics = [m for m in mechanics if service_id in m.services]
+            
+        # Filter by specialization if provided
+        specialization = request.args.get('specialization')
+        if specialization:
+            mechanics = [m for m in mechanics if specialization.lower() in m.specialization.lower()]
+            
+        # Search by issue description
+        issue_description = request.args.get('issue')
+        if issue_description:
+            # Get recommended services for this issue
+            recommended_service_ids = data.recommend_services(issue_description)
+            if recommended_service_ids:
+                # Filter mechanics who offer these services
+                filtered_mechanics = []
+                for mechanic in mechanics:
+                    for service_id in recommended_service_ids:
+                        if service_id in mechanic.services:
+                            filtered_mechanics.append(mechanic)
+                            break
+                mechanics = filtered_mechanics
+        
+        return render_template('mechanics.html', 
+                             mechanics=mechanics, 
+                             services=services,
+                             selected_service=service_id if 'service_id' in request.args else None,
+                             issue_description=issue_description)
     
     @app.route('/mechanics/<int:mechanic_id>')
     def mechanic_detail(mechanic_id):
@@ -62,28 +94,75 @@ def register_routes(app):
         
         form.vehicle_id.choices = [(v.id, f"{v.make} {v.model} ({v.year})") for v in user_vehicles]
         
-        # Generate time slots based on mechanic availability
-        time_slots = []
-        for availability in mechanic.availability:
-            if availability.available:
-                # Convert to datetime objects for manipulation
-                start_time = datetime.strptime(availability.start_time, '%H:%M')
-                end_time = datetime.strptime(availability.end_time, '%H:%M')
-                
-                current_time = start_time
-                while current_time < end_time:
-                    time_slots.append(current_time.strftime('%H:%M'))
-                    current_time += timedelta(minutes=60)  # 1-hour slots
+        # If issue description is provided in GET parameter, analyze it to recommend services
+        issue_description = request.args.get('issue')
+        recommended_service_id = None
         
+        if issue_description and request.method == 'GET':
+            recommended_service_ids = data.recommend_services(issue_description)
+            if recommended_service_ids:
+                # Find the first recommended service that this mechanic offers
+                for service_id in recommended_service_ids:
+                    if service_id in mechanic.services:
+                        recommended_service_id = service_id
+                        break
+            
+            # Pre-populate the issue description field
+            form.issue_description.data = issue_description
+        
+        # If we have a date parameter, use it to generate available time slots
+        selected_date = request.args.get('date')
+        if not selected_date and form.booking_date.data:
+            selected_date = form.booking_date.data.strftime('%Y-%m-%d')
+        
+        # Get available time slots for this date and service
+        time_slots = []
+        if selected_date and form.service_id.data:
+            time_slots = utils.get_available_times(mechanic, selected_date, form.service_id.data)
+        elif selected_date and recommended_service_id:
+            time_slots = utils.get_available_times(mechanic, selected_date, recommended_service_id)
+        else:
+            # Generate some default time slots if we can't determine availability yet
+            for availability in mechanic.availability:
+                if availability.available:
+                    # Convert to datetime objects for manipulation
+                    start_time = datetime.strptime(availability.start_time, '%H:%M')
+                    end_time = datetime.strptime(availability.end_time, '%H:%M')
+                    
+                    current_time = start_time
+                    while current_time < end_time:
+                        time_slots.append(current_time.strftime('%H:%M'))
+                        current_time += timedelta(minutes=60)  # 1-hour slots
+        
+        # Set the available time slots
         form.booking_time.choices = [(slot, slot) for slot in time_slots]
         
+        # If we have a recommended service, select it by default
+        if recommended_service_id and request.method == 'GET':
+            form.service_id.data = recommended_service_id
+        
         if form.validate_on_submit():
+            # Get the selected service to validate duration fits in the mechanic's schedule
+            selected_service = data.get_service_by_id(form.service_id.data)
+            if not selected_service:
+                flash('Selected service is not available. Please choose another service.', 'danger')
+                return redirect(url_for('book_mechanic', mechanic_id=mechanic_id))
+                
+            booking_date = form.booking_date.data.strftime('%Y-%m-%d') if form.booking_date.data else None
+            
+            # Validate the time slot is still available (to handle race conditions)
+            available_times = utils.get_available_times(mechanic, booking_date, selected_service.id)
+            if form.booking_time.data not in available_times:
+                flash('Sorry, this time slot is no longer available. Please select another time.', 'danger')
+                return redirect(url_for('book_mechanic', mechanic_id=mechanic_id))
+            
+            # Create the booking
             booking = data.create_booking(
                 customer_id=session['user_id'],
                 mechanic_id=mechanic_id,
                 service_id=form.service_id.data,
                 vehicle_id=form.vehicle_id.data,
-                booking_date=form.booking_date.data.strftime('%Y-%m-%d') if form.booking_date.data else None,
+                booking_date=booking_date,
                 booking_time=form.booking_time.data,
                 issue_description=form.issue_description.data
             )
@@ -93,7 +172,8 @@ def register_routes(app):
         
         return render_template('booking.html', 
                               form=form, 
-                              mechanic=mechanic)
+                              mechanic=mechanic,
+                              recommended_service_id=recommended_service_id)
     
     @app.route('/booking/confirmation/<int:booking_id>')
     def booking_confirmation(booking_id):
@@ -286,3 +366,96 @@ def register_routes(app):
             return jsonify({'success': True, 'message': f'Booking status updated to {new_status}'})
         else:
             return jsonify({'success': False, 'message': 'Booking not found'}), 404
+            
+    @app.route('/review/<int:booking_id>', methods=['GET', 'POST'])
+    def review_mechanic(booking_id):
+        """Leave a review for a mechanic after service completion"""
+        if 'user_id' not in session:
+            flash('Please log in to leave a review.', 'warning')
+            return redirect(url_for('login'))
+        
+        # Get the booking and verify it belongs to this user and is completed
+        customer_bookings = data.get_bookings_by_customer(session['user_id'])
+        booking = next((b for b in customer_bookings if b.id == booking_id), None)
+        
+        if not booking:
+            flash('Booking not found.', 'danger')
+            return redirect(url_for('customer_dashboard'))
+            
+        if booking.status != 'Completed':
+            flash('You can only review completed bookings.', 'warning')
+            return redirect(url_for('customer_dashboard'))
+            
+        # Check if this booking already has a review
+        existing_review = data.get_review_by_booking(booking_id)
+        if existing_review:
+            flash('You have already reviewed this service.', 'info')
+            return redirect(url_for('customer_dashboard'))
+        
+        form = ReviewForm()
+        form.booking_id.data = booking_id
+        form.mechanic_id.data = booking.mechanic_id
+        
+        if form.validate_on_submit():
+            review = data.create_review(
+                booking_id=booking_id,
+                customer_id=session['user_id'],
+                mechanic_id=int(form.mechanic_id.data),
+                rating=form.rating.data,
+                comment=form.comment.data
+            )
+            
+            if review:
+                flash('Thank you for your review!', 'success')
+                return redirect(url_for('customer_dashboard'))
+            else:
+                flash('There was an error submitting your review. Please try again.', 'danger')
+        
+        # Get mechanic and service details for context
+        mechanic = data.get_mechanic_by_id(booking.mechanic_id)
+        service = data.get_service_by_id(booking.service_id)
+        
+        return render_template('rate_mechanic.html', 
+                              form=form, 
+                              booking=booking,
+                              mechanic=mechanic,
+                              service=service)
+                              
+    @app.route('/api/suggest_services', methods=['POST'])
+    def suggest_services():
+        """API endpoint to suggest services based on issue description"""
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'message': 'Not logged in'}), 401
+        
+        json_data = request.get_json(silent=True) or {}
+        issue_description = json_data.get('issue_description', '')
+        
+        if not issue_description:
+            return jsonify({'success': False, 'message': 'No issue description provided'}), 400
+            
+        # Get service recommendations
+        recommended_service_ids = data.recommend_services(issue_description)
+        recommended_services = []
+        
+        # Only include valid services that exist
+        for sid in recommended_service_ids:
+            service = data.get_service_by_id(sid)
+            if service:
+                recommended_services.append(service)
+        
+        # Format the response data
+        services_data = []
+        for service in recommended_services:
+            services_data.append({
+                'id': service.id,
+                'name': service.name,
+                'price': service.price,
+                'description': service.description,
+                'duration_minutes': service.duration_minutes,
+                'category': service.category
+            })
+        
+        return jsonify({
+            'success': True, 
+            'recommendations': services_data
+        })

@@ -1,86 +1,65 @@
 {% extends 'base.html' %}
 
-{% block title %}Rate Your Mechanic - Harare Mobile Mechanics{% endblock %}
+{% block title %}Rate Your Mechanic{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white text-center py-3">
-                    <h2 class="mb-0">Rate Your Experience</h2>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="card-title">Rate Your Experience</h2>
                 </div>
-                <div class="card-body p-4">
-                    <div class="text-center mb-4">
-                        <div class="d-inline-block border rounded-circle p-2">
-                            {% if mechanic.image %}
-                                <img src="{{ mechanic.image }}" alt="{{ mechanic.name }}" class="rounded-circle" width="80" height="80" style="object-fit: cover;">
-                            {% else %}
-                                <img src="https://pixabay.com/get/g53f14e50f6526b37eecfda5e5e855bc2006f9ce27e3d789387c3cf752c7697aa1c1ede670fcbae8090960a5775105104a174737c87830e830f746e4a4f77c342_1280.jpg" alt="Mechanic" class="rounded-circle" width="80" height="80" style="object-fit: cover;">
-                            {% endif %}
+                <div class="card-body">
+                    <div class="mechanic-info d-flex align-items-center mb-4">
+                        <div class="mechanic-image mr-3">
+                            <img src="{{ mechanic.profile_image }}" alt="{{ mechanic.name }}" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover;">
                         </div>
-                        <h3 class="mt-3 mb-0">{{ mechanic.name }}</h3>
-                        <p class="text-muted">
-                            Service: {{ service.name }}<br>
-                            Date: 
-                            {% if appointment.date_time is string %}
-                                {{ appointment.date_time|replace('T', ' ') }}
-                            {% else %}
-                                {{ appointment.date_time.strftime('%Y-%m-%d %H:%M') }}
-                            {% endif %}
-                        </p>
+                        <div class="mechanic-details">
+                            <h4>{{ mechanic.name }}</h4>
+                            <p class="text-muted">{{ mechanic.specialization }}</p>
+                            <div class="booking-details">
+                                <p><strong>Service:</strong> {{ service.name }}</p>
+                                <p><strong>Date:</strong> {{ booking.booking_date }} at {{ booking.booking_time }}</p>
+                            </div>
+                        </div>
                     </div>
 
-                    <form method="POST" action="{{ url_for('rate_mechanic', appointment_id=appointment.id) }}">
+                    <form method="POST" action="{{ url_for('review_mechanic', booking_id=booking.id) }}">
                         {{ form.hidden_tag() }}
-                        {{ form.appointment_id }}
+                        {{ form.booking_id }}
                         {{ form.mechanic_id }}
                         
-                        <div class="mb-4 text-center">
-                            <div class="form-label">{{ form.rating.label }}</div>
+                        <div class="form-group">
+                            <label for="rating"><strong>{{ form.rating.label }}</strong></label>
                             <div class="rating-selection">
-                                <div class="btn-group" role="group" aria-label="Rating">
-                                    {% for value, label in form.rating.choices %}
-                                        <input type="radio" class="btn-check" name="rating" id="rating{{ value }}" value="{{ value }}" {% if form.rating.data == value %}checked{% endif %}>
-                                        <label for="rating{{ value }}" class="btn btn-outline-warning">
-                                            {% for i in range(value) %}
-                                                <i class="fas fa-star"></i>
-                                            {% endfor %}
-                                            {% for i in range(5 - value) %}
-                                                <i class="far fa-star"></i>
-                                            {% endfor %}
-                                        </label>
-                                    {% endfor %}
-                                </div>
+                                {{ form.rating(class="form-control") }}
                             </div>
                             {% if form.rating.errors %}
-                                <div class="invalid-feedback d-block">
+                                <div class="text-danger">
                                     {% for error in form.rating.errors %}
-                                        <span>{{ error }}</span>
+                                        <small>{{ error }}</small>
                                     {% endfor %}
                                 </div>
                             {% endif %}
                         </div>
                         
-                        <div class="mb-4">
-                            {{ form.comment.label(class="form-label") }}
-                            {{ form.comment(class="form-control", rows="4", placeholder="Share your experience with this mechanic...") }}
+                        <div class="form-group">
+                            <label for="comment"><strong>{{ form.comment.label }}</strong></label>
+                            {{ form.comment(class="form-control", rows=5, placeholder="Please share your experience with this mechanic...") }}
                             {% if form.comment.errors %}
-                                <div class="invalid-feedback d-block">
+                                <div class="text-danger">
                                     {% for error in form.comment.errors %}
-                                        <span>{{ error }}</span>
+                                        <small>{{ error }}</small>
                                     {% endfor %}
                                 </div>
                             {% endif %}
-                            <small class="form-text text-muted">Your feedback helps other customers and helps mechanics improve their service.</small>
+                            <small class="form-text text-muted">Your honest feedback helps other customers and helps mechanics improve their service.</small>
                         </div>
                         
-                        <div class="d-grid">
-                            {{ form.submit(class="btn btn-primary btn-lg") }}
-                        </div>
-                        
-                        <div class="text-center mt-3">
-                            <a href="{{ url_for('customer_dashboard') }}" class="text-decoration-none">Back to Dashboard</a>
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary">Submit Review</button>
+                            <a href="{{ url_for('customer_dashboard') }}" class="btn btn-secondary ml-2">Cancel</a>
                         </div>
                     </form>
                 </div>
@@ -88,42 +67,4 @@
         </div>
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Highlight the selected rating button
-    const ratingInputs = document.querySelectorAll('input[name="rating"]');
-    ratingInputs.forEach(input => {
-        input.addEventListener('change', function() {
-            document.querySelectorAll('.btn-check + label').forEach(label => {
-                label.classList.remove('active');
-            });
-            this.nextElementSibling.classList.add('active');
-        });
-        
-        // Set initial active state
-        if (input.checked) {
-            input.nextElementSibling.classList.add('active');
-        }
-    });
-});
-</script>
-
-<style>
-.btn-check:checked + .btn-outline-warning,
-.btn-check:hover + .btn-outline-warning {
-    background-color: var(--warning);
-    color: var(--text);
-}
-
-.btn-group > .btn:not(:last-child) {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
-.btn-group > .btn:not(:first-child) {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-}
-</style>
 {% endblock %}
