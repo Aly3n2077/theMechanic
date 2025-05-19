@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime, timedelta
-from models import Service, Mechanic, User, Vehicle, Booking, TimeSlot, Review
+from models import Service, Mechanic, User, Vehicle, Booking, TimeSlot, Review, Notification
 from werkzeug.security import generate_password_hash
 
 # In-memory data storage
@@ -11,10 +11,11 @@ users = []
 vehicles = []
 bookings = []
 reviews = []
+notifications = []
 
 # Initialize with some data
 def init_data():
-    global services, mechanics, users, vehicles, bookings, reviews, service_keywords
+    global services, mechanics, users, vehicles, bookings, reviews, notifications, service_keywords
     
     # Services
     services = [
@@ -186,6 +187,10 @@ def get_user_by_email(email):
 
 def get_user_by_id(user_id):
     return next((u for u in users if u.id == user_id), None)
+    
+def get_user_by_mechanic_id(mechanic_id):
+    """Get user account associated with a mechanic"""
+    return next((u for u in users if u.is_mechanic and u.mechanic_id == mechanic_id), None)
 
 def register_user(name, email, phone, password, is_mechanic=False):
     if get_user_by_email(email):
@@ -296,16 +301,48 @@ def create_booking(customer_id, mechanic_id, service_id, vehicle_id, booking_dat
         customer_name=customer_name,
         mechanic_name=mechanic_name,
         service_name=service_name,
-        vehicle_details=vehicle_details
+        vehicle_details=vehicle_details,
+        has_review=False
     )
     
     bookings.append(new_booking)
+    
+    # Create notifications for new booking
+    # Notification for customer
+    create_notification(
+        customer_id,
+        "Booking Submitted",
+        f"Your booking request for {service_name} with {mechanic_name} on {booking_date} has been submitted.",
+        "booking",
+        booking_id
+    )
+    
+    # Notification for mechanic
+    create_notification(
+        get_user_by_mechanic_id(mechanic_id).id if get_user_by_mechanic_id(mechanic_id) else mechanic_id,
+        "New Booking Request",
+        f"{customer_name} has requested your services for {service_name} on {booking_date} at {booking_time}.",
+        "booking",
+        booking_id
+    )
+    
     return new_booking
 
 def update_booking_status(booking_id, new_status):
     booking = next((b for b in bookings if b.id == booking_id), None)
     if booking:
+        old_status = booking.status
         booking.status = new_status
+        
+        # Create notifications for status changes
+        if old_status != new_status:
+            # Notify the customer
+            create_booking_notification(booking.customer_id, booking)
+            
+            # Notify the mechanic if applicable
+            if booking.mechanic_id:
+                create_booking_notification(booking.mechanic_id, booking, is_mechanic=True)
+                
         return booking
     return None
 
@@ -375,6 +412,87 @@ def update_mechanic_rating(mechanic_id):
     # Update mechanic's rating and review count
     mechanic.rating = avg_rating
     mechanic.review_count = len(mechanic_reviews)
+
+# Notification functions
+def get_notifications_by_user(user_id):
+    """Get all notifications for a specific user"""
+    return [n for n in notifications if n.user_id == user_id and not n.is_read]
+
+def mark_notification_read(notification_id):
+    """Mark a notification as read"""
+    notification = next((n for n in notifications if n.id == notification_id), None)
+    if notification:
+        notification.is_read = True
+        return True
+    return False
+
+def create_notification(user_id, title, message, notification_type, related_id=0):
+    """Create a new notification for a user"""
+    notification_id = max([n.id for n in notifications], default=0) + 1
+    
+    new_notification = Notification(
+        id=notification_id,
+        user_id=user_id,
+        title=title,
+        message=message,
+        notification_type=notification_type,
+        related_id=related_id,
+        created_at=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        is_read=False
+    )
+    
+    notifications.append(new_notification)
+    return new_notification
+
+def create_booking_notification(user_id, booking, is_mechanic=False):
+    """Create a notification related to a booking status change"""
+    if not booking:
+        return None
+        
+    # Get related entities
+    service = get_service_by_id(booking.service_id)
+    service_name = service.name if service else "Service"
+    
+    if is_mechanic:
+        customer = get_user_by_id(booking.customer_id)
+        customer_name = customer.name if customer else "A customer"
+        
+        if booking.status == "Pending":
+            title = "New Booking Request"
+            message = f"{customer_name} has requested your services for {service_name} on {booking.booking_date} at {booking.booking_time}."
+        elif booking.status == "Confirmed":
+            title = "Booking Confirmed"
+            message = f"You have confirmed the booking for {service_name} with {customer_name} on {booking.booking_date} at {booking.booking_time}."
+        elif booking.status == "Completed":
+            title = "Booking Marked as Completed"
+            message = f"You have marked the {service_name} for {customer_name} as completed."
+        elif booking.status == "Cancelled":
+            title = "Booking Cancelled"
+            message = f"The booking for {service_name} with {customer_name} on {booking.booking_date} has been cancelled."
+        else:
+            title = "Booking Update"
+            message = f"The status of the booking with {customer_name} has been updated to {booking.status}."
+    else:
+        mechanic = get_mechanic_by_id(booking.mechanic_id)
+        mechanic_name = mechanic.name if mechanic else "The mechanic"
+        
+        if booking.status == "Pending":
+            title = "Booking Submitted"
+            message = f"Your booking request for {service_name} with {mechanic_name} on {booking.booking_date} has been submitted."
+        elif booking.status == "Confirmed":
+            title = "Booking Confirmed"
+            message = f"{mechanic_name} has confirmed your booking for {service_name} on {booking.booking_date} at {booking.booking_time}."
+        elif booking.status == "Completed":
+            title = f"Booking Completed - Rate {mechanic_name}"
+            message = f"Your booking with {mechanic_name} for {service_name} has been marked as completed. Would you like to leave a review?"
+        elif booking.status == "Cancelled":
+            title = "Booking Cancelled"
+            message = f"Your booking for {service_name} with {mechanic_name} on {booking.booking_date} has been cancelled."
+        else:
+            title = "Booking Update"
+            message = f"The status of your booking with {mechanic_name} has been updated to {booking.status}."
+    
+    return create_notification(user_id, title, message, "booking", booking.id)
 
 # Service recommendation system - maps issue keywords to service IDs
 service_keywords = {

@@ -221,17 +221,25 @@ def register_routes(app):
         bookings = data.get_bookings_by_customer(session['user_id'])
         vehicles = data.get_vehicles_by_user(session['user_id'])
         
+        # Get any unread notifications for this user
+        notifications = data.get_notifications_by_user(session['user_id'])
+        
         # Split bookings by status
         upcoming = [b for b in bookings if b.status in ["Pending", "Confirmed"] 
                    and datetime.strptime(b.booking_date, '%Y-%m-%d') >= datetime.now()]
         past = [b for b in bookings if b.status in ["Completed", "Cancelled"] 
                or datetime.strptime(b.booking_date, '%Y-%m-%d') < datetime.now()]
         
+        # Find any completed bookings that need reviews
+        need_review = [b for b in past if b.status == "Completed" and not b.has_review]
+        
         return render_template('customer_dashboard.html',
                               user=user,
                               upcoming_bookings=upcoming,
                               past_bookings=past,
-                              vehicles=vehicles)
+                              need_review=need_review,
+                              vehicles=vehicles,
+                              notifications=notifications)
     
     @app.route('/dashboard/mechanic')
     def mechanic_dashboard():
@@ -250,17 +258,26 @@ def register_routes(app):
         
         bookings = data.get_bookings_by_mechanic(mechanic.id)
         
+        # Get any unread notifications for this user
+        notifications = data.get_notifications_by_user(session['user_id'])
+        
         # Split bookings by status and date
         today = datetime.now().strftime('%Y-%m-%d')
-        upcoming = [b for b in bookings if b.status in ["Pending", "Confirmed"] 
-                   and b.booking_date >= today]
+        pending = [b for b in bookings if b.status == "Pending"]
+        confirmed = [b for b in bookings if b.status == "Confirmed" and b.booking_date >= today]
         completed = [b for b in bookings if b.status == "Completed"]
+        
+        # Get reviews for this mechanic
+        mechanic_reviews = data.get_reviews_by_mechanic(mechanic.id)
         
         return render_template('mechanic_dashboard.html',
                               user=user,
                               mechanic=mechanic,
-                              upcoming_bookings=upcoming,
-                              completed_bookings=completed)
+                              pending_bookings=pending,
+                              confirmed_bookings=confirmed,
+                              completed_bookings=completed,
+                              reviews=mechanic_reviews,
+                              notifications=notifications)
     
     @app.route('/login', methods=['GET', 'POST'])
     def login():

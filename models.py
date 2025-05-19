@@ -81,3 +81,14 @@ class Review:
     comment: str
     created_at: str
     customer_name: str = ""
+    
+@dataclass
+class Notification:
+    id: int
+    user_id: int
+    title: str
+    message: str
+    notification_type: str  # booking, reminder, promo, system
+    related_id: int = 0  # ID of related item (booking, etc)
+    created_at: str = ""
+    is_read: bool = False
