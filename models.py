@@ -51,6 +51,7 @@ class User:
     password_hash: str
     is_mechanic: bool = False
     mechanic_id: Optional[int] = None
+    bio: str = ""
 
 @dataclass
 class Vehicle:

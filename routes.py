@@ -1,6 +1,6 @@
 import os
 from flask import render_template, redirect, url_for, flash, request, session, jsonify
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime, timedelta
 from forms import LoginForm, RegistrationForm, VehicleForm, BookingForm, ReviewForm, VehicleListingForm, VehicleSearchForm, ProfileForm
 import data
@@ -341,6 +341,54 @@ def register_routes(app):
         
         return render_template('register.html', form=form)
     
+    @app.route('/profile/edit', methods=['GET', 'POST'])
+    def edit_profile():
+        """Edit user profile page"""
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        
+        user = data.get_user_by_id(session['user_id'])
+        if not user:
+            flash('User not found.', 'danger')
+            return redirect(url_for('index'))
+        
+        form = ProfileForm()
+        
+        if request.method == 'GET':
+            # Pre-populate form with current values
+            form.name.data = user.name
+            form.email.data = user.email
+            form.phone.data = user.phone
+            if hasattr(user, 'bio'):
+                form.bio.data = user.bio
+        
+        if form.validate_on_submit():
+            # Handle profile update
+            
+            # If user wants to change password
+            if form.current_password.data and form.new_password.data:
+                # Verify current password
+                if not check_password_hash(user.password_hash, form.current_password.data):
+                    flash('Current password is incorrect.', 'danger')
+                    return render_template('edit_profile.html', form=form)
+                
+                # Update password
+                data.update_user_password(user.id, form.new_password.data)
+                flash('Password updated successfully.', 'success')
+            
+            # Update profile info
+            data.update_user_profile(
+                user_id=user.id,
+                name=form.name.data,
+                phone=form.phone.data,
+                bio=form.bio.data
+            )
+            
+            flash('Profile updated successfully!', 'success')
+            return redirect(url_for('dashboard'))
+        
+        return render_template('edit_profile.html', form=form, user=user)
+        
     @app.route('/logout')
     def logout():
         """Log out the current user"""

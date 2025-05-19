@@ -602,6 +602,30 @@ service_keywords = {
     "appraisal": [24]  # Car Appraisal
 }
 
+def update_user_profile(user_id, name, phone, bio=None):
+    """Update a user's profile information"""
+    user = get_user_by_id(user_id)
+    if not user:
+        return False
+        
+    user.name = name
+    user.phone = phone
+    if bio is not None:
+        user.bio = bio
+            
+    return True
+    
+def update_user_password(user_id, new_password):
+    """Update a user's password"""
+    from werkzeug.security import generate_password_hash
+    
+    user = get_user_by_id(user_id)
+    if not user:
+        return False
+        
+    user.password_hash = generate_password_hash(new_password)
+    return True
+    
 def recommend_services(issue_description):
     """
     Analyze issue description and recommend appropriate services
