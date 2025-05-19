@@ -83,3 +83,16 @@ class VehicleSearchForm(FlaskForm):
         ('Certified Pre-Owned', 'Certified Pre-Owned')
     ], validators=[Optional()])
     submit = SubmitField('Search')
+
+class ProfileForm(FlaskForm):
+    name = StringField('Full Name', validators=[DataRequired(), Length(min=2, max=100)])
+    email = StringField('Email', validators=[DataRequired(), Email()], render_kw={'readonly': True})
+    phone = StringField('Phone Number', validators=[DataRequired(), Length(min=10, max=15)])
+    bio = TextAreaField('About Me', validators=[Optional(), Length(max=500)])
+    current_password = PasswordField('Current Password', validators=[Optional()])
+    new_password = PasswordField('New Password', validators=[Optional(), Length(min=6)])
+    confirm_password = PasswordField('Confirm New Password', validators=[
+        Optional(), 
+        EqualTo('new_password', message='Passwords must match')
+    ])
+    submit = SubmitField('Save Changes')

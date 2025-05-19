@@ -2,7 +2,7 @@ import os
 from flask import render_template, redirect, url_for, flash, request, session, jsonify
 from werkzeug.security import check_password_hash
 from datetime import datetime, timedelta
-from forms import LoginForm, RegistrationForm, VehicleForm, BookingForm, ReviewForm, VehicleListingForm, VehicleSearchForm
+from forms import LoginForm, RegistrationForm, VehicleForm, BookingForm, ReviewForm, VehicleListingForm, VehicleSearchForm, ProfileForm
 import data
 import utils
 

@@ -86,13 +86,13 @@
                 {% endif %}
                 <div class="card-body">
                     <h5 class="card-title">{{ vehicle.make }} {{ vehicle.model }} ({{ vehicle.year }})</h5>
-                    <h6 class="text-primary">${{ vehicle.price|format_number }}</h6>
+                    <h6 class="text-primary">${{ vehicle.price }}</h6>
                     <div class="my-2">
                         <span class="badge bg-secondary">{{ vehicle.condition }}</span>
                         <span class="badge bg-info">{{ vehicle.transmission }}</span>
                         <span class="badge bg-warning text-dark">{{ vehicle.fuel_type }}</span>
                     </div>
-                    <p class="card-text mb-1"><strong>Mileage:</strong> {{ vehicle.mileage|format_number }} km</p>
+                    <p class="card-text mb-1"><strong>Mileage:</strong> {{ vehicle.mileage }} km</p>
                     <p class="card-text mb-1"><strong>Color:</strong> {{ vehicle.color }}</p>
                     <p class="card-text text-truncate">{{ vehicle.description }}</p>
                 </div>
