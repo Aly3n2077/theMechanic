@@ -317,11 +317,15 @@ def register_routes(app):
                 flash('Email already registered. Please log in.', 'warning')
                 return redirect(url_for('login'))
             
+            # Check if user wants to register as a mechanic
+            is_mechanic = form.is_mechanic.data if hasattr(form, 'is_mechanic') else False
+            
             user = data.register_user(
                 name=form.name.data,
                 email=form.email.data,
                 phone=form.phone.data,
-                password=form.password.data
+                password=form.password.data,
+                is_mechanic=is_mechanic
             )
             
             if user:
@@ -329,6 +333,11 @@ def register_routes(app):
                 return redirect(url_for('login'))
             else:
                 flash('Registration failed. Please try again.', 'danger')
+        elif request.method == 'POST':
+            # If form validation failed, log the errors
+            for field, errors in form.errors.items():
+                for error in errors:
+                    print(f"Error in {field}: {error}")
         
         return render_template('register.html', form=form)
     

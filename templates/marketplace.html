@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}Vehicle Marketplace - Harare Mobile Mechanics{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="display-4 mb-3">Vehicle Marketplace</h1>
+            <p class="lead">Find quality vehicles for sale, or list your own vehicle.</p>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h3 class="mb-0">Search Filters</h3>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('vehicle_marketplace') }}" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="make" class="form-label">Make</label>
+                            {{ form.make(class="form-control") }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="model" class="form-label">Model</label>
+                            {{ form.model(class="form-control") }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="condition" class="form-label">Condition</label>
+                            {{ form.condition(class="form-select") }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="min_year" class="form-label">Min Year</label>
+                            {{ form.min_year(class="form-control") }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="max_year" class="form-label">Max Year</label>
+                            {{ form.max_year(class="form-control") }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="min_price" class="form-label">Min Price ($)</label>
+                            {{ form.min_price(class="form-control") }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="max_price" class="form-label">Max Price ($)</label>
+                            {{ form.max_price(class="form-control") }}
+                        </div>
+                        <div class="col-12 mt-3">
+                            <button type="submit" class="btn btn-primary">Search</button>
+                            <a href="{{ url_for('vehicle_marketplace') }}" class="btn btn-outline-secondary">Reset</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12 d-flex justify-content-between align-items-center">
+            <h2>Available Vehicles</h2>
+            {% if session.get('user_id') %}
+            <a href="{{ url_for('create_vehicle_listing') }}" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> List Your Vehicle
+            </a>
+            {% else %}
+            <a href="{{ url_for('login', next=url_for('create_vehicle_listing')) }}" class="btn btn-outline-success">
+                Login to List Your Vehicle
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if vehicles %}
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for vehicle in vehicles %}
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                {% if vehicle.images and vehicle.images|length > 0 %}
+                <img src="{{ vehicle.images[0] }}" class="card-img-top" alt="{{ vehicle.make }} {{ vehicle.model }}">
+                {% else %}
+                <div class="bg-light text-center p-5">
+                    <i class="bi bi-car-front display-1 text-secondary"></i>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ vehicle.make }} {{ vehicle.model }} ({{ vehicle.year }})</h5>
+                    <h6 class="text-primary">${{ vehicle.price|format_number }}</h6>
+                    <div class="my-2">
+                        <span class="badge bg-secondary">{{ vehicle.condition }}</span>
+                        <span class="badge bg-info">{{ vehicle.transmission }}</span>
+                        <span class="badge bg-warning text-dark">{{ vehicle.fuel_type }}</span>
+                    </div>
+                    <p class="card-text mb-1"><strong>Mileage:</strong> {{ vehicle.mileage|format_number }} km</p>
+                    <p class="card-text mb-1"><strong>Color:</strong> {{ vehicle.color }}</p>
+                    <p class="card-text text-truncate">{{ vehicle.description }}</p>
+                </div>
+                <div class="card-footer bg-white border-top-0">
+                    <a href="{{ url_for('vehicle_listing_detail', vehicle_id=vehicle.id) }}" class="btn btn-primary w-100">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i> No vehicles found matching your criteria. Try adjusting your filters or <a href="{{ url_for('vehicle_marketplace') }}">view all vehicles</a>.
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Format currency display
+    document.addEventListener('DOMContentLoaded', function() {
+        const priceElements = document.querySelectorAll('.text-primary');
+        priceElements.forEach(element => {
+            const price = parseFloat(element.textContent.replace('$', '').replace(',', ''));
+            element.textContent = '$' + price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        });
+    });
+</script>
+{% endblock %}
