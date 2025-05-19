@@ -169,3 +169,80 @@ def get_booking_details(booking_id, user_id):
         'service': service,
         'vehicle': vehicle
     }
+
+def get_distance_between_points(lat1, lon1, lat2, lon2):
+    """
+    Calculate the distance between two points on the Earth's surface
+    using the Haversine formula.
+    Returns the distance in kilometers.
+    """
+    from math import radians, sin, cos, sqrt, atan2
+    
+    # Convert latitude and longitude from degrees to radians
+    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+    
+    # Haversine formula
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1-a))
+    radius_of_earth = 6371  # Radius of the Earth in kilometers
+    
+    # Distance in kilometers
+    distance = radius_of_earth * c
+    return distance
+
+def find_nearest_mechanics(user_lat, user_lon, max_distance=10, service_ids=None):
+    """
+    Find mechanics near the provided coordinates, optionally filtering by services offered.
+    Returns a list of mechanics sorted by proximity (nearest first).
+    
+    Args:
+        user_lat: User's latitude
+        user_lon: User's longitude
+        max_distance: Maximum distance in kilometers (default: 10km)
+        service_ids: List of service IDs to filter by (optional)
+        
+    Returns:
+        List of mechanics with distances added, sorted by proximity
+    """
+    mechanics_with_distance = []
+    
+    for mechanic in data.get_mechanics():
+        if not mechanic.geo_location:
+            continue
+            
+        # Calculate distance
+        distance = get_distance_between_points(
+            user_lat, user_lon, 
+            mechanic.geo_location.latitude, 
+            mechanic.geo_location.longitude
+        )
+        
+        # Check if within max_distance
+        if distance <= max_distance:
+            # Check if mechanic offers requested services
+            if service_ids and not any(sid in mechanic.services for sid in service_ids):
+                continue
+                
+            # Add mechanic with distance
+            mechanic_info = {
+                'mechanic': mechanic,
+                'distance': round(distance, 2),
+                'travel_time_estimate': estimate_travel_time(distance)
+            }
+            mechanics_with_distance.append(mechanic_info)
+    
+    # Sort by distance (nearest first)
+    mechanics_with_distance.sort(key=lambda x: x['distance'])
+    return mechanics_with_distance
+
+def estimate_travel_time(distance_km):
+    """
+    Estimate travel time in minutes based on distance.
+    This is a simple estimate assuming average urban travel speeds.
+    """
+    average_speed_km_per_hour = 30  # Assume 30 km/h average speed in urban areas
+    time_hours = distance_km / average_speed_km_per_hour
+    time_minutes = time_hours * 60
+    return round(time_minutes)

@@ -540,6 +540,22 @@ def register_routes(app):
                 if location and location.lower() in mechanic.location.lower():
                     score += 15  # Location bonus
                 
+                # Get matched service details
+                matched_service_details = []
+                for sid in matching_services:
+                    service = data.get_service_by_id(sid)
+                    if service:
+                        matched_service_details.append({
+                            'id': service.id,
+                            'name': service.name,
+                            'price': service.price,
+                            'duration_minutes': service.duration_minutes,
+                            'category': service.category
+                        })
+                
+                # Add specialty services
+                specialty_services = mechanic.specialty_services if hasattr(mechanic, 'specialty_services') else []
+                
                 # Format the response data
                 mechanic_data = {
                     'id': mechanic.id,
@@ -550,7 +566,9 @@ def register_routes(app):
                     'review_count': mechanic.review_count,
                     'location': mechanic.location,
                     'profile_image': mechanic.profile_image,
-                    'matching_services': matching_services,
+                    'contact': mechanic.phone,
+                    'matching_services': matched_service_details,
+                    'specialty_services': specialty_services,
                     'match_score': score
                 }
                 suitable_mechanics.append(mechanic_data)
@@ -561,4 +579,78 @@ def register_routes(app):
         return jsonify({
             'success': True,
             'mechanics': suitable_mechanics[:5]  # Return top 5 matches
+        })
+        
+    @app.route('/api/find_nearest_mechanics', methods=['POST'])
+    def find_nearby_mechanics():
+        """API endpoint to find mechanics near a location using maps integration"""
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'message': 'Not logged in'}), 401
+            
+        json_data = request.get_json(silent=True) or {}
+        latitude = json_data.get('latitude')
+        longitude = json_data.get('longitude')
+        max_distance = json_data.get('max_distance', 10)  # Default 10km radius
+        service_ids = json_data.get('service_ids', [])    # Optional service filtering
+        
+        if latitude is None or longitude is None:
+            return jsonify({'success': False, 'message': 'Location coordinates required'}), 400
+            
+        # Find nearby mechanics
+        nearest_mechanics = utils.find_nearest_mechanics(
+            float(latitude), 
+            float(longitude), 
+            max_distance=float(max_distance),
+            service_ids=service_ids if service_ids else None
+        )
+        
+        # Format response
+        mechanic_list = []
+        for item in nearest_mechanics:
+            mechanic = item['mechanic']
+            
+            # Get all services this mechanic offers
+            mechanic_services = []
+            for service_id in mechanic.services:
+                service = data.get_service_by_id(service_id)
+                if service:
+                    mechanic_services.append({
+                        'id': service.id,
+                        'name': service.name,
+                        'price': service.price,
+                        'category': service.category
+                    })
+            
+            # Format geo location
+            geo_location = None
+            if mechanic.geo_location:
+                geo_location = {
+                    'latitude': mechanic.geo_location.latitude,
+                    'longitude': mechanic.geo_location.longitude,
+                    'address': mechanic.geo_location.address
+                }
+            
+            # Create mechanic data
+            mechanic_data = {
+                'id': mechanic.id,
+                'name': mechanic.name,
+                'specialization': mechanic.specialization,
+                'experience_years': mechanic.experience_years,
+                'rating': mechanic.rating,
+                'review_count': mechanic.review_count,
+                'location': mechanic.location,
+                'profile_image': mechanic.profile_image,
+                'phone': mechanic.phone,
+                'distance_km': item['distance'],
+                'estimated_travel_time_minutes': item['travel_time_estimate'],
+                'services': mechanic_services,
+                'geo_location': geo_location,
+                'specialty_services': mechanic.specialty_services if hasattr(mechanic, 'specialty_services') else []
+            }
+            mechanic_list.append(mechanic_data)
+        
+        return jsonify({
+            'success': True,
+            'mechanics': mechanic_list,
+            'total_found': len(mechanic_list)
         })

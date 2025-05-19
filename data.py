@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime, timedelta
-from models import Service, Mechanic, User, Vehicle, Booking, TimeSlot, Review, Notification
+from models import Service, Mechanic, User, Vehicle, Booking, TimeSlot, Review, Notification, GeoLocation
 from werkzeug.security import generate_password_hash
 
 # In-memory data storage
@@ -39,6 +39,10 @@ def init_data():
         Service(18, "Power Window Repair", "Fix non-functioning power windows", 95.00, 60, "Repair"),
         Service(19, "Check Engine Light Diagnosis", "Advanced diagnostics for check engine warnings", 85.00, 60, "Diagnostics"),
         Service(20, "Pre-Purchase Inspection", "Comprehensive vehicle inspection before buying", 120.00, 90, "Diagnostics"),
+        Service(21, "Car Modifications", "Custom performance upgrades and modifications", 250.00, 180, "Specialty"),
+        Service(22, "Key Cutting & Locksmith", "Key replacement, cutting, and electronic key programming", 75.00, 45, "Specialty"),
+        Service(23, "Car Restoration", "Classic and vintage car restoration services", 350.00, 240, "Specialty"),
+        Service(24, "Vehicle Buying/Selling Assistance", "Professional assistance with vehicle purchases or sales", 150.00, 120, "Consultation"),
     ]
     
     # Create availability schedule
@@ -55,44 +59,54 @@ def init_data():
     # Mechanics
     mechanics = [
         Mechanic(
-            1, "Michael Johnson", "michael@hararemechanics.com", "+263775123456", 
+            1, "Michael Johnson", "michael@hararemechanics.com", "+263 77 152 2122", 
             "Engine Specialist", 8, 
             "Expert in diagnosing and repairing engine issues with 8 years of experience. Specializes in performance tuning and fuel system optimization.",
             "Harare Central",
             "https://pixabay.com/get/g41825f713016a15af65a97f2d831c387e6635c0e3f755e41bf871505158f7b45bf0e9ae870241ca134405cc24ee87458de469d0e4a6f24eba6610a3957a12a43_1280.jpg",
-            4.8, 56, [1, 3, 7, 12, 14, 19], default_availability
+            4.8, 56, [1, 3, 7, 12, 14, 19, 21], default_availability,
+            GeoLocation(-17.8252, 31.0335, "7th Street, Harare Central"),
+            ["Performance Tuning", "Engine Rebuilds", "Custom ECU Programming"]
         ),
         Mechanic(
-            2, "Grace Moyo", "grace@hararemechanics.com", "+263775234567",
+            2, "Grace Moyo", "grace@hararemechanics.com", "+263 78 683 8849",
             "Electrical Systems", 5,
             "Specialized in automotive electrical systems and computer diagnostics. Expert in troubleshooting complex electronic issues.",
             "Avondale, Harare",
             "https://pixabay.com/get/gd9925ae067b218944a0a8142738fcc68fe6a6fde36d9c8b38fe289c91bfc0f9b74b9ce2aeb86a28baec8da299e00ba8783eb34d9d4c5020a049b4436e864604c_1280.jpg",
-            4.6, 42, [3, 5, 6, 10, 15, 16, 18, 19], default_availability
+            4.6, 42, [3, 5, 6, 10, 15, 16, 18, 19, 22], default_availability,
+            GeoLocation(-17.7892, 31.0418, "King George Road, Avondale"),
+            ["Key Programming", "Security System Installation", "ECU Repairs"]
         ),
         Mechanic(
-            3, "David Mapondera", "david@hararemechanics.com", "+263775345678",
+            3, "David Mapondera", "david@hararemechanics.com", "+263 77 152 2122",
             "Brake & Suspension Specialist", 6,
             "Expert in brake system repairs and suspension work. Certified technician with advanced training in vehicle dynamics.",
             "Borrowdale, Harare",
             "https://pixabay.com/get/g2b44b9419edd576516cb8f0e17729ca8129ffc5de274c74a5c9706796e98e38b6e01197f1864b3d9f092bc0fa577e191cbb67f3637a5066f794e7409840737dc_1280.jpg",
-            4.9, 68, [2, 4, 8, 11, 13, 17], default_availability
+            4.9, 68, [2, 4, 8, 11, 13, 17, 21], default_availability,
+            GeoLocation(-17.7318, 31.0918, "Crowhill Road, Borrowdale"),
+            ["Coilover Suspension", "Performance Brakes", "Custom Exhaust Systems"]
         ),
         Mechanic(
-            4, "Tendai Mutasa", "tendai@hararemechanics.com", "+263775456789",
-            "General Mechanic", 10,
+            4, "Tendai Mutasa", "tendai@hararemechanics.com", "+263 78 683 8849",
+            "General Mechanic & Vehicle Inspector", 10,
             "All-round mechanic with 10 years of experience in all aspects of car repair. Provides comprehensive vehicle inspection and maintenance services.",
             "Eastlea, Harare",
             "https://pixabay.com/get/g53f14e50f6526b37eecfda5e5e855bc2006f9ce27e3d789387c3cf752c7697aa1c1ede670fcbae8090960a5775105104a174737c87830e830f746e4a4f77c342_1280.jpg",
-            4.7, 89, [1, 2, 4, 7, 9, 20], default_availability
+            4.7, 89, [1, 2, 4, 7, 9, 20, 24], default_availability,
+            GeoLocation(-17.8102, 31.0833, "Samora Machel Avenue, Eastlea"),
+            ["Vehicle Appraisal", "Pre-Purchase Inspection", "Fleet Maintenance"]
         ),
         Mechanic(
-            5, "Chiedza Mupita", "chiedza@hararemechanics.com", "+263775567890",
-            "Transmission Specialist", 7,
-            "Specializes in manual and automatic transmission repairs. Expert in diagnosing complex drivetrain issues.",
+            5, "Chiedza Mupita", "chiedza@hararemechanics.com", "+263 77 152 2122",
+            "Transmission & Restoration Specialist", 7,
+            "Specializes in manual and automatic transmission repairs and classic car restoration. Expert in diagnosing complex drivetrain issues.",
             "Mabelreign, Harare",
             "https://pixabay.com/get/g20ef4ebfa2a1456a2a21e5522f5db72dd7f9a3c9c4c9fe4b63d3c25ff8e50a7a0bd02a2a72db0f57195fd99d2398c35eb5f6c1d8ffd6abfc3aeb48f52afee5dc_1280.jpg",
-            4.7, 45, [3, 7, 12, 15, 16, 19], default_availability
+            4.7, 45, [3, 7, 12, 15, 16, 19, 23], default_availability,
+            GeoLocation(-17.7833, 31.0167, "Sherwood Drive, Mabelreign"),
+            ["Classic Car Restoration", "Vintage Engine Rebuilds", "Custom Interiors"]
         )
     ]
     
@@ -558,6 +572,33 @@ service_keywords = {
     "buying": [20],  # Pre-Purchase Inspection
     "new car": [20],  # Pre-Purchase Inspection
     "used car": [20],  # Pre-Purchase Inspection
+    
+    # Car Modifications
+    "modification": [21],  # Car Modifications
+    "mod": [21],  # Car Modifications
+    "custom": [21],  # Car Modifications
+    "tuning": [21],  # Car Modifications
+    "upgrade": [21],  # Car Modifications
+    
+    # Key Cutting/Locksmith Services
+    "key": [22],  # Key Cutting
+    "lock": [22],  # Key Cutting/Locksmith
+    "unlock": [22],  # Locksmith
+    "remote": [22],  # Key fob/remote programming
+    
+    # Car Restoration
+    "restoration": [23],  # Car Restoration
+    "restore": [23],  # Car Restoration
+    "classic": [23],  # Classic Car Restoration
+    "vintage": [23],  # Vintage Car Restoration
+    "rebuild": [23],  # Car Restoration
+    
+    # Car Buying/Selling Assistance
+    "sell": [24],  # Car Selling Assistance
+    "buy": [24],  # Car Buying Assistance
+    "purchase": [24],  # Car Buying Assistance
+    "value": [24],  # Car Valuation
+    "appraisal": [24]  # Car Appraisal
 }
 
 def recommend_services(issue_description):

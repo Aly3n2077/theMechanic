@@ -19,6 +19,12 @@ class TimeSlot:
     available: bool = True
     
 @dataclass
+class GeoLocation:
+    latitude: float
+    longitude: float
+    address: str = ""
+    
+@dataclass
 class Mechanic:
     id: int
     name: str
@@ -33,6 +39,8 @@ class Mechanic:
     review_count: int
     services: List[int] = field(default_factory=list)
     availability: List[TimeSlot] = field(default_factory=list)
+    geo_location: Optional[GeoLocation] = None
+    specialty_services: List[str] = field(default_factory=list)
 
 @dataclass
 class User:
