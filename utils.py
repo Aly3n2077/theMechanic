@@ -19,8 +19,8 @@ def mechanic_required(f):
             flash('Please log in to access this page.', 'warning')
             return redirect(url_for('login', next=request.url))
         
-        user = data.get_user(session['user_id'])
-        if not user or user.user_type != 'mechanic':
+        user = data.get_user_by_id(session['user_id'])
+        if not user or not user.is_mechanic:
             flash('You do not have permission to access this page.', 'danger')
             return redirect(url_for('index'))
         
@@ -34,8 +34,8 @@ def customer_required(f):
             flash('Please log in to access this page.', 'warning')
             return redirect(url_for('login', next=request.url))
         
-        user = data.get_user(session['user_id'])
-        if not user or user.user_type != 'customer':
+        user = data.get_user_by_id(session['user_id'])
+        if not user or user.is_mechanic:
             flash('You do not have permission to access this page.', 'danger')
             return redirect(url_for('index'))
         
@@ -63,71 +63,109 @@ def get_available_times(mechanic, date_str, service_id):
     """Get available appointment times for a mechanic on a given date"""
     try:
         date = datetime.strptime(date_str, "%Y-%m-%d").date()
-        day_name = date.strftime("%A").lower()
         
-        # Check if mechanic works on this day
-        if day_name not in mechanic.availability or not mechanic.availability[day_name]:
+        # Prevent booking in the past
+        if date < datetime.now().date():
+            return []
+            
+        day_name = date.strftime("%A")
+        
+        # Check if mechanic works on this day by looking for available TimeSlot objects for this day
+        day_slots = [slot for slot in mechanic.availability if slot.day == day_name and slot.available]
+        if not day_slots:
             return []
         
-        # Get working hours
-        hours = mechanic.availability[day_name]
-        start_time = datetime.strptime(hours["start"], "%H:%M").time()
-        end_time = datetime.strptime(hours["end"], "%H:%M").time()
-        
-        # Get service duration
-        service = data.get_service(service_id)
+        # Process mechanic's working hours for this day
+        time_slots = []
+        service = data.get_service_by_id(service_id)
         if not service:
             return []
-        duration = service.duration  # in minutes
-        
-        # Generate time slots
-        current_time = datetime.combine(date, start_time)
-        end_datetime = datetime.combine(date, end_time)
-        time_slots = []
-        
-        while current_time + timedelta(minutes=duration) <= end_datetime:
-            # Check if this time slot conflicts with existing appointments
-            conflicts = False
             
-            for appt in data.get_mechanic_appointments(mechanic.id):
-                if isinstance(appt.date_time, str):
-                    appt_datetime = datetime.fromisoformat(appt.date_time)
-                else:
-                    appt_datetime = appt.date_time
+        duration_mins = service.duration_minutes
+        
+        # Generate available time slots from the mechanic's schedule
+        for slot in day_slots:
+            # Use the correct attribute names from the TimeSlot model
+            start_time = datetime.strptime(slot.start_time, "%H:%M").time()
+            end_time = datetime.strptime(slot.end_time, "%H:%M").time()
+            
+            # Generate time slots
+            current_time = datetime.combine(date, start_time)
+            end_datetime = datetime.combine(date, end_time)
+            
+            # Create 30-minute interval slots
+            while current_time + timedelta(minutes=duration_mins) <= end_datetime:
+                # Check if this time slot conflicts with existing bookings
+                conflicts = False
                 
-                appt_service = data.get_service(appt.service_id)
-                appt_duration = appt_service.duration if appt_service else 60
+                for booking in data.get_bookings_by_mechanic(mechanic.id):
+                    # Only check confirmed or pending bookings
+                    if booking.status not in ["Confirmed", "Pending"]:
+                        continue
+                        
+                    # Check if booking is on the same day
+                    if booking.booking_date != date_str:
+                        continue
+                        
+                    # Convert booking time to datetime for comparison
+                    booking_time = datetime.strptime(booking.booking_time, "%H:%M").time()
+                    booking_datetime = datetime.combine(date, booking_time)
+                    
+                    # Get the service duration for this booking
+                    booking_service = data.get_service_by_id(booking.service_id)
+                    booking_duration = booking_service.duration_minutes if booking_service else 60
+                    
+                    # Check for time slot conflict
+                    booking_end = booking_datetime + timedelta(minutes=booking_duration)
+                    potential_slot_end = current_time + timedelta(minutes=duration_mins)
+                    
+                    # If potential slot overlaps with existing booking
+                    if (current_time <= booking_datetime < potential_slot_end or
+                        current_time < booking_end <= potential_slot_end or
+                        (booking_datetime <= current_time and booking_end >= potential_slot_end)):
+                        conflicts = True
+                        break
                 
-                # Check if appointment is on the same day and status is not 'cancelled'
-                if (appt_datetime.date() == date and appt.status != 'cancelled' and
-                    (current_time <= appt_datetime < current_time + timedelta(minutes=duration) or
-                     current_time < appt_datetime + timedelta(minutes=appt_duration) <= current_time + timedelta(minutes=duration))):
-                    conflicts = True
-                    break
-            
-            if not conflicts:
-                time_slots.append(current_time.strftime("%H:%M"))
-            
-            current_time += timedelta(minutes=30)  # 30-minute intervals
+                # Only add non-conflicting time slots
+                if not conflicts:
+                    # Don't allow booking times in the past on today's date
+                    if date == datetime.now().date() and current_time.time() <= datetime.now().time():
+                        pass
+                    else:
+                        time_slots.append(current_time.strftime("%H:%M"))
+                
+                current_time += timedelta(minutes=30)  # 30-minute intervals
         
-        return time_slots
+        return sorted(time_slots) # Return sorted time slots for better UX
     except Exception as e:
         print(f"Error getting available times: {e}")
         return []
 
-def get_appointment_details(appointment_id):
-    """Get detailed information about an appointment"""
-    appointment = data.get_appointment(appointment_id)
-    if not appointment:
+def get_booking_details(booking_id, user_id):
+    """Get detailed information about a booking"""
+    # Get booking by checking both customer and mechanic bookings
+    user = data.get_user_by_id(user_id)
+    if not user:
         return None
     
-    customer = data.get_user(appointment.customer_id)
-    mechanic = data.get_mechanic(appointment.mechanic_id)
-    service = data.get_service(appointment.service_id)
+    if user.is_mechanic and user.mechanic_id:
+        bookings = data.get_bookings_by_mechanic(user.mechanic_id)
+    else:
+        bookings = data.get_bookings_by_customer(user_id)
+    
+    booking = next((b for b in bookings if b.id == booking_id), None)
+    if not booking:
+        return None
+    
+    customer = data.get_user_by_id(booking.customer_id)
+    mechanic = data.get_mechanic_by_id(booking.mechanic_id)
+    service = data.get_service_by_id(booking.service_id)
+    vehicle = data.get_vehicle_by_id(booking.vehicle_id)
     
     return {
-        'appointment': appointment,
+        'booking': booking,
         'customer': customer,
         'mechanic': mechanic,
-        'service': service
+        'service': service,
+        'vehicle': vehicle
     }
