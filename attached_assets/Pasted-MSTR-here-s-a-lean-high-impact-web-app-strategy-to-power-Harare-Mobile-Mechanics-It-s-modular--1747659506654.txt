@@ -1,0 +1,91 @@
+MSTR, here’s a lean, high-impact web-app strategy to power “Harare Mobile Mechanics.” It’s modular, fast to deploy, and integrates seamlessly with your Facebook ↔ WhatsApp funnel.
+
+---
+
+## 1. Objectives & KPIs
+
+* **Drive Bookings:** Convert Facebook/WhatsApp leads into scheduled jobs
+* **Streamline Ops:** Real-time dashboard for jobs, inventory, and invoices
+* **Boost Retention:** Automated follow-ups, service reminders, ratings
+
+**Key Metrics:**
+
+* Conversion rate (lead → booking) ≥ 30%
+* Avg. job completion time tracked
+* Monthly active customers (repeat rate) ≥ 25%
+
+---
+
+## 2. User Flows & Core Features
+
+| Flow                       | Features                                                                               |
+| -------------------------- | -------------------------------------------------------------------------------------- |
+| **Customer**               | • Browse services & pricing pages<br>• Quick “Book Now” form (date, location, vehicle) |
+|                            | • Pay deposit via Stripe/PayPal embed<br>• Receive WhatsApp confirmation & reminders   |
+| **Mechanic & You (Admin)** | • Dashboard: upcoming jobs, client details, route map<br>• OBD scan reports upload     |
+|                            | • Inventory management: parts, markups, stock alerts                                   |
+|                            | • Invoicing: auto-generate PDF, email/SMS send                                         |
+| **Marketing Automation**   | • Facebook-pixel embedded<br>• Drip emails/SMS: service tips, referral requests        |
+
+---
+
+## 3. Tech Stack & Integrations
+
+* **Front-end:** Next.js (React) for SSR performance, Tailwind CSS
+* **Back-end:** Firebase (Auth, Firestore, Functions) *or* Supabase (Auth, Postgres, Edge Functions)
+* **Payments:** Stripe or PayPal JavaScript SDK
+* **Messaging:** WhatsApp Business API via Twilio + Facebook Login for social sign-in
+* **Maps & Routing:** Google Maps API or OpenRouteService for on-site navigation
+* **Analytics:** Google Analytics + Facebook Pixel
+
+---
+
+## 4. MVP Scope (4–6 Weeks)
+
+1. **Week 1:**
+
+   * Scaffold Next.js app, configure Auth (email + FB login)
+   * Design homepage & service listings
+2. **Week 2:**
+
+   * Build “Book Now” form → store in Firestore/Postgres
+   * Integrate Stripe/PayPal checkout
+   * Trigger WhatsApp confirmation via cloud function
+3. **Week 3:**
+
+   * Admin dashboard: list upcoming jobs, client info, map links
+   * Basic inventory table + CRUD
+4. **Week 4:**
+
+   * Invoicing: auto-PDF generation & email/SMS send
+   * Service-reminder scheduler (30/90-day follow-ups)
+5. **Week 5–6:**
+
+   * Facebook Pixel & GA events
+   * Mobile optimization & testing
+   * Deploy to Vercel (or Firebase Hosting)
+
+---
+
+## 5. UX & Design
+
+* **Mobile-first:** large call-to-action buttons, clear forms
+* **Visual Trust:** service icons, customer testimonials carousel
+* **Speed:** SSR for first-load, lazy-load images of repair snapshots
+
+---
+
+## 6. Growth & Iteration
+
+* **Phase 2 (Months 2–3):**
+
+  * Add live-chat widget (WhatsApp web embed)
+  * Loyalty module: points & referral dashboard
+* **Phase 3 (Months 4+):**
+
+  * In-app training portal (video tips, tutorials)
+  * White-label for fleet clients with bulk scheduling
+
+---
+
+This roadmap gives you a razor-sharp web app that scales with your on-the-ground learning & Facebook marketing. Ready to sketch out the UI screens or dive into data schema?
