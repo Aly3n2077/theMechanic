@@ -10,6 +10,10 @@ logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-for-testing")
 
+# Initialize CSRF protection
+from flask_wtf.csrf import CSRFProtect
+csrf = CSRFProtect(app)
+
 # Add current year to all templates
 @app.context_processor
 def inject_now():

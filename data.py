@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime, timedelta
-from models import Service, Mechanic, User, Vehicle, Booking, TimeSlot, Review, Notification, GeoLocation
+from models import Service, Mechanic, User, Vehicle, Booking, TimeSlot, Review, Notification, GeoLocation, Vehicle4Sale
 from werkzeug.security import generate_password_hash
 
 # In-memory data storage
@@ -12,6 +12,7 @@ vehicles = []
 bookings = []
 reviews = []
 notifications = []
+vehicles_for_sale = []
 
 # Initialize with some data
 def init_data():

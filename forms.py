@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from flask_wtf.csrf import CSRFProtect
 from wtforms import StringField, PasswordField, TextAreaField, SelectField, TimeField, DateField, IntegerField, BooleanField, HiddenField, FloatField
 from wtforms.validators import DataRequired, Email, Length, EqualTo, NumberRange, Optional
 

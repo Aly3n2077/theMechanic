@@ -192,7 +192,7 @@ def get_distance_between_points(lat1, lon1, lat2, lon2):
     distance = radius_of_earth * c
     return distance
 
-def find_nearest_mechanics(user_lat, user_lon, max_distance=10, service_ids=None):
+def find_nearest_mechanics(user_lat, user_lon, max_distance=10.0, service_ids=None):
     """
     Find mechanics near the provided coordinates, optionally filtering by services offered.
     Returns a list of mechanics sorted by proximity (nearest first).

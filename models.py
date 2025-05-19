@@ -100,3 +100,22 @@ class Notification:
     related_id: int = 0  # ID of related item (booking, etc)
     created_at: str = ""
     is_read: bool = False
+    
+@dataclass
+class Vehicle4Sale:
+    id: int
+    seller_id: int
+    make: str
+    model: str
+    year: int
+    price: float
+    condition: str  # New, Used, Certified Pre-Owned
+    mileage: int
+    color: str
+    transmission: str
+    fuel_type: str
+    description: str
+    features: List[str] = field(default_factory=list)
+    images: List[str] = field(default_factory=list)
+    listing_date: str = ""
+    is_sold: bool = False
