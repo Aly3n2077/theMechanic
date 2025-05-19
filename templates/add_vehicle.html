@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Vehicle - Harare Mobile Mechanics{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">Add a Vehicle</h2>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('add_vehicle') }}">
+                        {{ form.csrf_token }}
+                        
+                        <div class="mb-3">
+                            <label for="make" class="form-label">Make</label>
+                            {{ form.make(class="form-control", placeholder="e.g. Toyota, Honda, Ford") }}
+                            {% if form.make.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.make.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="model" class="form-label">Model</label>
+                            {{ form.model(class="form-control", placeholder="e.g. Corolla, Civic, F-150") }}
+                            {% if form.model.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.model.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="year" class="form-label">Year</label>
+                            {{ form.year(class="form-control", placeholder="e.g. 2018") }}
+                            {% if form.year.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.year.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="license_plate" class="form-label">License Plate</label>
+                            {{ form.license_plate(class="form-control", placeholder="e.g. ABC123") }}
+                            {% if form.license_plate.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.license_plate.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">Add Vehicle</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center py-3">
+                    <a href="{{ url_for('customer_dashboard') }}" class="btn btn-link">Cancel and return to dashboard</a>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">Why Register Your Vehicle?</h5>
+                    <ul class="mb-0">
+                        <li>Faster booking process</li>
+                        <li>Mechanics can prepare with the right tools and parts</li>
+                        <li>Keep track of service history for each vehicle</li>
+                        <li>Receive reminders for recommended maintenance</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,418 @@
+{% extends 'base.html' %}
+
+{% block title %}Mechanic Dashboard - Harare Mobile Mechanics{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-3">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-user-circle fa-5x text-primary"></i>
+                    </div>
+                    <h5 class="card-title mb-1">{{ user.name }}</h5>
+                    <p class="text-muted small mb-3">{{ user.email }}</p>
+                    <div class="d-grid">
+                        <a href="#" class="btn btn-outline-primary btn-sm">Edit Profile</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="list-group mb-4">
+                <a href="#dashboard" class="list-group-item list-group-item-action active dashboard-tab" data-target="dashboard-overview">
+                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                </a>
+                <a href="#bookings" class="list-group-item list-group-item-action dashboard-tab" data-target="upcoming-bookings">
+                    <i class="fas fa-calendar-alt me-2"></i> Upcoming Bookings
+                </a>
+                <a href="#completed" class="list-group-item list-group-item-action dashboard-tab" data-target="completed-bookings">
+                    <i class="fas fa-check-circle me-2"></i> Completed Jobs
+                </a>
+                <a href="#availability" class="list-group-item list-group-item-action dashboard-tab" data-target="availability-settings">
+                    <i class="fas fa-clock me-2"></i> Availability
+                </a>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Need Help?</h5>
+                    <p class="card-text small">Having issues with the dashboard?</p>
+                    <div class="d-grid">
+                        <a href="#" class="btn btn-primary">Contact Support</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-lg-9">
+            <!-- Alert Container -->
+            <div id="alert-container"></div>
+            
+            <!-- Dashboard Overview -->
+            <div id="dashboard-overview" class="tab-content">
+                <h3 class="mb-4">Dashboard Overview</h3>
+                
+                <!-- Stats Summary -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="stat-box">
+                            <div class="stat-number" id="upcoming-count">0</div>
+                            <div class="stat-label">Upcoming Jobs</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-box">
+                            <div class="stat-number" id="completed-count">0</div>
+                            <div class="stat-label">Completed Jobs</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-box">
+                            <div class="stat-number" id="total-bookings">0</div>
+                            <div class="stat-label">Total Bookings</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Today's Schedule -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Today's Schedule</h5>
+                    </div>
+                    <div class="card-body">
+                        {% set today = now.strftime('%Y-%m-%d') %}
+                        {% set today_bookings = upcoming_bookings|selectattr('booking_date', 'equalto', today)|list %}
+                        
+                        {% if today_bookings %}
+                            {% for booking in today_bookings %}
+                            <div class="booking-item mb-3 pb-3 border-bottom">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <h5 class="mb-1">{{ booking.service_name }}</h5>
+                                        <p class="mb-1">
+                                            <span class="badge booking-status {% if booking.status == 'Pending' %}badge-pending{% elif booking.status == 'Confirmed' %}badge-confirmed{% else %}badge-completed{% endif %}">
+                                                {{ booking.status }}
+                                            </span>
+                                            <span class="ms-2">{{ booking.booking_time }}</span>
+                                        </p>
+                                        <p class="mb-1"><strong>Customer:</strong> {{ booking.customer_name }}</p>
+                                        <p class="mb-0"><strong>Vehicle:</strong> {{ booking.vehicle_details }}</p>
+                                    </div>
+                                    <div class="col-md-4 text-md-end">
+                                        <div class="booking-actions">
+                                            {% if booking.status == 'Pending' %}
+                                            <button class="btn btn-sm btn-success mb-2" data-booking-id="{{ booking.id }}" data-status="Confirmed">
+                                                <i class="fas fa-check me-1"></i> Confirm
+                                            </button>
+                                            {% elif booking.status == 'Confirmed' %}
+                                            <button class="btn btn-sm btn-success mb-2" data-booking-id="{{ booking.id }}" data-status="Completed">
+                                                <i class="fas fa-check-double me-1"></i> Mark Complete
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-calendar-day fa-3x text-muted mb-3"></i>
+                                <h5>No bookings for today</h5>
+                                <p class="text-muted">Enjoy your free time!</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Quick Stats -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Next 7 Days</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="weeklyBookingsChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Service Breakdown</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="servicesChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Upcoming Bookings -->
+            <div id="upcoming-bookings" class="tab-content" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3>Upcoming Bookings</h3>
+                    <div class="d-flex">
+                        <input type="date" id="date-filter" class="form-control me-2" style="width: auto;">
+                        <select id="status-filter" class="form-select" style="width: auto;">
+                            <option value="all">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                        </select>
+                    </div>
+                </div>
+                
+                {% if upcoming_bookings %}
+                    {% for booking in upcoming_bookings %}
+                    <div class="card mb-3 booking-item" data-date="{{ booking.booking_date }}">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-9">
+                                    <h5 class="card-title mb-1">{{ booking.service_name }}</h5>
+                                    <p class="text-muted mb-2">
+                                        <span class="badge booking-status {% if booking.status == 'Pending' %}badge-pending{% elif booking.status == 'Confirmed' %}badge-confirmed{% else %}badge-completed{% endif %}">
+                                            {{ booking.status }}
+                                        </span>
+                                        <span class="ms-2">
+                                            <i class="fas fa-calendar-alt me-1"></i> {{ booking.booking_date }} at {{ booking.booking_time }}
+                                        </span>
+                                    </p>
+                                    <p class="mb-1"><strong>Customer:</strong> {{ booking.customer_name }}</p>
+                                    <p class="mb-1"><strong>Phone:</strong> {{ user.phone }}</p>
+                                    <p class="mb-1"><strong>Vehicle:</strong> {{ booking.vehicle_details }}</p>
+                                    {% if booking.issue_description %}
+                                    <p class="mb-0"><strong>Issue:</strong> {{ booking.issue_description }}</p>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-3 text-md-end mt-3 mt-md-0">
+                                    <div class="booking-actions">
+                                        {% if booking.status == 'Pending' %}
+                                        <button class="btn btn-sm btn-success mb-2" data-booking-id="{{ booking.id }}" data-status="Confirmed">
+                                            <i class="fas fa-check me-1"></i> Confirm
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" data-booking-id="{{ booking.id }}" data-status="Cancel">
+                                            <i class="fas fa-times me-1"></i> Decline
+                                        </button>
+                                        {% elif booking.status == 'Confirmed' %}
+                                        <button class="btn btn-sm btn-success mb-2" data-booking-id="{{ booking.id }}" data-status="Completed">
+                                            <i class="fas fa-check-double me-1"></i> Mark Complete
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" data-booking-id="{{ booking.id }}" data-status="Cancel">
+                                            <i class="fas fa-times me-1"></i> Cancel
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-calendar-day fa-3x text-muted mb-3"></i>
+                        <h4>No upcoming bookings</h4>
+                        <p>You don't have any scheduled services.</p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Completed Bookings -->
+            <div id="completed-bookings" class="tab-content" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3>Completed Jobs</h3>
+                    <input type="month" id="month-filter" class="form-control" style="width: auto;">
+                </div>
+                
+                {% if completed_bookings %}
+                    {% for booking in completed_bookings %}
+                    <div class="card mb-3 booking-item">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-9">
+                                    <h5 class="card-title mb-1">{{ booking.service_name }}</h5>
+                                    <p class="text-muted mb-2">
+                                        <span class="badge booking-status badge-completed">Completed</span>
+                                        <span class="ms-2">
+                                            <i class="fas fa-calendar-alt me-1"></i> {{ booking.booking_date }} at {{ booking.booking_time }}
+                                        </span>
+                                    </p>
+                                    <p class="mb-1"><strong>Customer:</strong> {{ booking.customer_name }}</p>
+                                    <p class="mb-1"><strong>Vehicle:</strong> {{ booking.vehicle_details }}</p>
+                                    {% if booking.issue_description %}
+                                    <p class="mb-0"><strong>Issue:</strong> {{ booking.issue_description|truncate(100) }}</p>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-3 text-md-end mt-3 mt-md-0">
+                                    <a href="#" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-file-invoice me-1"></i> Invoice
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-check-circle fa-3x text-muted mb-3"></i>
+                        <h4>No completed jobs</h4>
+                        <p>You haven't completed any jobs yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Availability Settings -->
+            <div id="availability-settings" class="tab-content" style="display: none;">
+                <h3 class="mb-4">Manage Availability</h3>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Weekly Schedule</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">Set your regular working hours for each day of the week.</p>
+                        
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Day</th>
+                                        <th>Morning (8am-12pm)</th>
+                                        <th>Afternoon (1pm-5pm)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
+                                    <tr>
+                                        <td>{{ day }}</td>
+                                        <td>
+                                            <div class="form-check form-switch availability-slot available">
+                                                <input class="form-check-input availability-toggle" type="checkbox" 
+                                                       checked
+                                                       data-day="{{ day }}" 
+                                                       data-timeslot="Morning">
+                                                <label class="form-check-label">Available</label>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="form-check form-switch availability-slot available">
+                                                <input class="form-check-input availability-toggle" type="checkbox" 
+                                                       checked
+                                                       data-day="{{ day }}" 
+                                                       data-timeslot="Afternoon">
+                                                <label class="form-check-label">Available</label>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    <tr>
+                                        <td>Sunday</td>
+                                        <td colspan="2" class="text-center text-muted">Closed</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="d-grid mt-3">
+                            <button type="button" class="btn btn-primary">Save Schedule</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Time Off</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">Set vacation days or other time off when you won't be available.</p>
+                        
+                        <form>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-5">
+                                    <label class="form-label">Start Date</label>
+                                    <input type="date" class="form-control">
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label">End Date</label>
+                                    <input type="date" class="form-control">
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="button" class="btn btn-primary w-100">Add</button>
+                                </div>
+                            </div>
+                        </form>
+                        
+                        <div class="mt-4">
+                            <h6>Upcoming Time Off</h6>
+                            <p class="text-muted">No scheduled time off.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/bookings.js') }}"></script>
+<script src="{{ url_for('static', filename='js/mechanic_dashboard.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize charts
+        const weeklyCtx = document.getElementById('weeklyBookingsChart').getContext('2d');
+        const weeklyBookingsChart = new Chart(weeklyCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Bookings',
+                    data: [2, 1, 3, 2, 4, 1, 0],
+                    backgroundColor: '#2B60DE',
+                    borderColor: '#2B60DE',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        const servicesCtx = document.getElementById('servicesChart').getContext('2d');
+        const servicesChart = new Chart(servicesCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Oil Change', 'Brake Service', 'Engine Diagnostics', 'Other'],
+                datasets: [{
+                    data: [4, 2, 3, 1],
+                    backgroundColor: ['#2B60DE', '#4d79e1', '#7593e6', '#9db3ec'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

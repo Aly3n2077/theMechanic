@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+
+{% block title %}Book {{ mechanic.name }} - Harare Mobile Mechanics{% endblock %}
+
+{% block head_content %}
+<!-- Add flatpickr for better date picking -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <!-- Booking Form -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">Book an Appointment</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('book_mechanic', mechanic_id=mechanic.id) }}">
+                        {{ form.csrf_token }}
+                        {{ form.mechanic_id }}
+                        
+                        <!-- Service Selection -->
+                        <div class="mb-4">
+                            <label for="service_id" class="form-label">Select Service</label>
+                            {{ form.service_id(class="form-select") }}
+                            <div class="mt-2">
+                                <small class="text-muted">Price: <span id="service-price">$0.00</span></small>
+                            </div>
+                        </div>
+                        
+                        <!-- Vehicle Selection -->
+                        <div class="mb-4">
+                            <label for="vehicle_id" class="form-label">Select Vehicle</label>
+                            {{ form.vehicle_id(class="form-select") }}
+                            <div class="mt-2">
+                                <small class="text-muted">Don't see your vehicle? <a href="{{ url_for('add_vehicle', next=request.path) }}">Add a new vehicle</a></small>
+                            </div>
+                        </div>
+                        
+                        <!-- Date and Time -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="booking_date" class="form-label">Preferred Date</label>
+                                {{ form.booking_date(class="form-control", placeholder="Select date") }}
+                                {% if form.booking_date.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.booking_date.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="booking_time" class="form-label">Preferred Time</label>
+                                {{ form.booking_time(class="form-select") }}
+                                {% if form.booking_time.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.booking_time.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Issue Description -->
+                        <div class="mb-4">
+                            <label for="issue_description" class="form-label">Describe the Issue</label>
+                            {{ form.issue_description(class="form-control", rows=5, placeholder="Please describe the problem with your vehicle in detail...") }}
+                            {% if form.issue_description.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.issue_description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Please provide as much detail as possible to help the mechanic prepare for your service.
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">Confirm Booking</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mechanic Info Sidebar -->
+        <div class="col-lg-4">
+            <!-- Mechanic Card -->
+            <div class="card mb-4">
+                <img src="{{ mechanic.profile_image }}" class="card-img-top" alt="{{ mechanic.name }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ mechanic.name }}</h5>
+                    <p class="text-muted mb-1">{{ mechanic.specialization }}</p>
+                    <div class="rating mb-2" data-rating="{{ mechanic.rating }}" data-count="{{ mechanic.review_count }}">
+                        <!-- Stars will be populated by JavaScript -->
+                    </div>
+                    <p class="text-muted small mb-2">
+                        <i class="fas fa-map-marker-alt me-1"></i> {{ mechanic.location }}
+                    </p>
+                    <p class="text-muted small mb-3">
+                        <i class="fas fa-clock me-1"></i> {{ mechanic.experience_years }} years experience
+                    </p>
+                    <p class="card-text">{{ mechanic.bio|truncate(100) }}</p>
+                </div>
+            </div>
+            
+            <!-- What to Expect -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">What to Expect</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-3">
+                            <div class="d-flex">
+                                <i class="fas fa-check-circle text-success me-3 mt-1"></i>
+                                <p class="mb-0">Confirmation within 1 hour</p>
+                            </div>
+                        </li>
+                        <li class="mb-3">
+                            <div class="d-flex">
+                                <i class="fas fa-tools text-success me-3 mt-1"></i>
+                                <p class="mb-0">Mechanic brings all necessary tools</p>
+                            </div>
+                        </li>
+                        <li class="mb-3">
+                            <div class="d-flex">
+                                <i class="fas fa-wallet text-success me-3 mt-1"></i>
+                                <p class="mb-0">Pay only after service completion</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="d-flex">
+                                <i class="fas fa-shield-alt text-success me-3 mt-1"></i>
+                                <p class="mb-0">30-day service guarantee</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize flatpickr for date input
+        flatpickr("#booking_date", {
+            dateFormat: "Y-m-d",
+            minDate: "today",
+            disable: [
+                function(date) {
+                    // Disable Sundays
+                    return date.getDay() === 0;
+                }
+            ],
+            locale: {
+                firstDayOfWeek: 1 // Start week on Monday
+            }
+        });
+    });
+</script>
+{% endblock %}

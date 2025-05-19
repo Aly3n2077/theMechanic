@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}Find Mechanics - Harare Mobile Mechanics{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>Find a Mechanic</h1>
+            <p class="lead">Book skilled mechanics who come to your location in Harare and surrounding areas.</p>
+        </div>
+    </div>
+    
+    <!-- Filter Section -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="service-filter" class="form-label">Filter by Service</label>
+                    <select id="service-filter" class="form-select">
+                        <option value="all" selected>All Services</option>
+                        <option value="1">Oil Change</option>
+                        <option value="2">Brake Inspection</option>
+                        <option value="3">Engine Diagnostics</option>
+                        <option value="5">Battery Replacement</option>
+                        <option value="8">Wheel Alignment</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="location-filter" class="form-label">Location</label>
+                    <select id="location-filter" class="form-select">
+                        <option value="all" selected>All Locations</option>
+                        <option value="central">Harare Central</option>
+                        <option value="avondale">Avondale</option>
+                        <option value="borrowdale">Borrowdale</option>
+                        <option value="eastlea">Eastlea</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="rating-filter" class="form-label">Minimum Rating</label>
+                    <select id="rating-filter" class="form-select">
+                        <option value="0" selected>Any Rating</option>
+                        <option value="3">3+ Stars</option>
+                        <option value="4">4+ Stars</option>
+                        <option value="4.5">4.5+ Stars</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mechanics Listing -->
+    <div class="row g-4">
+        {% for mechanic in mechanics %}
+        <div class="col-md-6 col-lg-4 mechanic-card" data-services="{{ mechanic.services|join(',') }}" data-location="{{ mechanic.location|lower|replace(' ', '-') }}" data-rating="{{ mechanic.rating }}">
+            <div class="card h-100">
+                <img src="{{ mechanic.profile_image }}" class="card-img-top profile-img" alt="{{ mechanic.name }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ mechanic.name }}</h5>
+                    <p class="text-muted mb-1">{{ mechanic.specialization }}</p>
+                    <div class="rating mb-2" data-rating="{{ mechanic.rating }}" data-count="{{ mechanic.review_count }}">
+                        <!-- Stars will be populated by JavaScript -->
+                    </div>
+                    <p class="text-muted small mb-2"><i class="fas fa-map-marker-alt me-1"></i> {{ mechanic.location }}</p>
+                    <p class="text-muted small mb-2"><i class="fas fa-clock me-1"></i> {{ mechanic.experience_years }} years experience</p>
+                    <p class="card-text">{{ mechanic.bio|truncate(100) }}</p>
+                    
+                    <!-- Service badges -->
+                    <div class="mb-3">
+                        {% for service_id in mechanic.services[:3] %}
+                            {% set service = services|selectattr('id', 'equalto', service_id)|first %}
+                            <span class="badge bg-light text-dark me-1 mb-1">{{ service.name }}</span>
+                        {% endfor %}
+                        {% if mechanic.services|length > 3 %}
+                            <span class="badge bg-light text-dark">+{{ mechanic.services|length - 3 }} more</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer bg-white">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('mechanic_detail', mechanic_id=mechanic.id) }}" class="btn btn-outline-primary">View Profile</a>
+                        <a href="{{ url_for('book_mechanic', mechanic_id=mechanic.id) }}" class="btn btn-primary">Book Now</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    {% if not mechanics %}
+    <div class="text-center py-5">
+        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+        <h3>No mechanics found</h3>
+        <p>Try adjusting your filters or check back later.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Location filter functionality
+        const locationFilter = document.getElementById('location-filter');
+        
+        if (locationFilter) {
+            locationFilter.addEventListener('change', function() {
+                const selectedLocation = this.value;
+                const mechanics = document.querySelectorAll('.mechanic-card');
+                
+                mechanics.forEach(mechanic => {
+                    const location = mechanic.getAttribute('data-location');
+                    const serviceMatch = document.getElementById('service-filter').value === 'all' || 
+                                         mechanic.getAttribute('data-services').split(',').includes(document.getElementById('service-filter').value);
+                    const ratingMatch = parseFloat(mechanic.getAttribute('data-rating')) >= parseFloat(document.getElementById('rating-filter').value);
+                    
+                    if ((selectedLocation === 'all' || location === selectedLocation) && serviceMatch && ratingMatch) {
+                        mechanic.style.display = 'block';
+                    } else {
+                        mechanic.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // Rating filter functionality
+        const ratingFilter = document.getElementById('rating-filter');
+        
+        if (ratingFilter) {
+            ratingFilter.addEventListener('change', function() {
+                const minRating = parseFloat(this.value);
+                const mechanics = document.querySelectorAll('.mechanic-card');
+                
+                mechanics.forEach(mechanic => {
+                    const rating = parseFloat(mechanic.getAttribute('data-rating'));
+                    const serviceMatch = document.getElementById('service-filter').value === 'all' || 
+                                         mechanic.getAttribute('data-services').split(',').includes(document.getElementById('service-filter').value);
+                    const locationMatch = document.getElementById('location-filter').value === 'all' || 
+                                         mechanic.getAttribute('data-location') === document.getElementById('location-filter').value;
+                    
+                    if (rating >= minRating && serviceMatch && locationMatch) {
+                        mechanic.style.display = 'block';
+                    } else {
+                        mechanic.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

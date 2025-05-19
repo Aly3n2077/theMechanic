@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block title %}Harare Mobile Mechanics - Book Your Car Service{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1>Mobile Mechanics At Your Service</h1>
+                <p>Book skilled mechanics to come to your location. We bring professional auto repair and maintenance services right to your doorstep.</p>
+                <div class="d-grid gap-2 d-md-flex">
+                    <a href="{{ url_for('mechanics_list') }}" class="btn btn-light btn-lg">Find a Mechanic</a>
+                    {% if 'user_id' not in session %}
+                    <a href="{{ url_for('register') }}" class="btn btn-outline-light btn-lg">Register Now</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6 d-none d-lg-block">
+                <!-- Hero image is set in CSS background -->
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="container my-5">
+    <h2 class="text-center mb-4">How It Works</h2>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="feature-box">
+                <div class="feature-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h3>Find a Mechanic</h3>
+                <p>Browse through our network of skilled mechanics and select the one that matches your requirements.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-box">
+                <div class="feature-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <h3>Book an Appointment</h3>
+                <p>Select a convenient date and time for the mechanic to come to your location.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-box">
+                <div class="feature-icon">
+                    <i class="fas fa-car"></i>
+                </div>
+                <h3>Get Your Car Fixed</h3>
+                <p>The mechanic arrives at your location with all necessary tools to fix your car.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Mechanics -->
+<section class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Top Mechanics</h2>
+        <a href="{{ url_for('mechanics_list') }}" class="btn btn-outline-primary">View All</a>
+    </div>
+    <div class="row g-4">
+        {% for mechanic in featured_mechanics %}
+        <div class="col-md-4">
+            <div class="card mechanic-card h-100">
+                <img src="{{ mechanic.profile_image }}" class="card-img-top" alt="{{ mechanic.name }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ mechanic.name }}</h5>
+                    <p class="text-muted">{{ mechanic.specialization }}</p>
+                    <div class="rating mb-2" data-rating="{{ mechanic.rating }}" data-count="{{ mechanic.review_count }}">
+                        <!-- Stars will be populated by JavaScript -->
+                    </div>
+                    <p class="card-text">{{ mechanic.bio|truncate(100) }}</p>
+                </div>
+                <div class="card-footer bg-white border-top-0">
+                    <a href="{{ url_for('mechanic_detail', mechanic_id=mechanic.id) }}" class="btn btn-primary w-100">View Profile</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Services Section -->
+<section class="bg-light py-5 my-5">
+    <div class="container">
+        <h2 class="text-center mb-4">Our Services</h2>
+        <div class="row g-4">
+            {% for service in services[:6] %}
+            <div class="col-md-4">
+                <div class="card service-card h-100">
+                    <div class="card-body text-center">
+                        <div class="service-icon">
+                            {% if service.category == 'Maintenance' %}
+                                <i class="fas fa-oil-can"></i>
+                            {% elif service.category == 'Repair' %}
+                                <i class="fas fa-tools"></i>
+                            {% elif service.category == 'Diagnostics' %}
+                                <i class="fas fa-laptop-code"></i>
+                            {% else %}
+                                <i class="fas fa-car-battery"></i>
+                            {% endif %}
+                        </div>
+                        <h5 class="card-title">{{ service.name }}</h5>
+                        <p class="card-text">{{ service.description }}</p>
+                        <p class="text-primary fw-bold">${{ service.price|round(2) }}</p>
+                        <p class="text-muted small">Est. time: {{ service.duration_minutes }} min</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section class="container my-5">
+    <h2 class="text-center mb-4">What Our Customers Say</h2>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="testimonial">
+                <div class="rating mb-2" data-rating="5" data-count="1">
+                    <!-- Stars will be populated by JavaScript -->
+                </div>
+                <p>"Michael was punctual, professional, and fixed my car right in my driveway. No more wasting time at repair shops!"</p>
+                <div class="d-flex align-items-center mt-3">
+                    <div>
+                        <h6 class="mb-0">John Dube</h6>
+                        <p class="text-muted small mb-0">Toyota Corolla owner</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="testimonial">
+                <div class="rating mb-2" data-rating="4.5" data-count="1">
+                    <!-- Stars will be populated by JavaScript -->
+                </div>
+                <p>"Grace diagnosed the issue with my car's electrical system quickly. Very knowledgeable and provided great service."</p>
+                <div class="d-flex align-items-center mt-3">
+                    <div>
+                        <h6 class="mb-0">Sarah Moyo</h6>
+                        <p class="text-muted small mb-0">Honda Civic owner</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="testimonial">
+                <div class="rating mb-2" data-rating="5" data-count="1">
+                    <!-- Stars will be populated by JavaScript -->
+                </div>
+                <p>"David came to my office and fixed my brakes during my work hours. Saved me so much time and the price was reasonable."</p>
+                <div class="d-flex align-items-center mt-3">
+                    <div>
+                        <h6 class="mb-0">Tendai Mutasa</h6>
+                        <p class="text-muted small mb-0">BMW owner</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="bg-primary text-white py-5 my-5">
+    <div class="container text-center">
+        <h2>Ready to Get Your Car Fixed?</h2>
+        <p class="lead mb-4">Book a skilled mechanic in your area today</p>
+        <a href="{{ url_for('mechanics_list') }}" class="btn btn-light btn-lg">Find a Mechanic Now</a>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Additional index page specific JavaScript can go here
+</script>
+{% endblock %}

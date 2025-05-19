@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Services - Harare Mobile Mechanics{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Automotive Services</h1>
+    
+    <!-- Category Filter -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body p-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <label for="category-filter" class="form-label">Filter by Category:</label>
+                    <select id="category-filter" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                            <option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>
+                                {{ category }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mt-3 mt-md-0">
+                    <p class="mb-0"><strong>{{ services|length }}</strong> services available</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Services Grid -->
+    <div class="row">
+        {% if services %}
+            {% for service in services %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 service-card shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <h3 class="card-title">{{ service.name }}</h3>
+                                <span class="badge {% if service.category == 'Maintenance' %}bg-info{% elif service.category == 'Repairs' %}bg-warning{% else %}bg-primary{% endif %}">
+                                    {{ service.category }}
+                                </span>
+                            </div>
+                            <p class="card-text">{{ service.description }}</p>
+                            <div class="d-flex justify-content-between mt-3">
+                                <div>
+                                    <p class="mb-0"><i class="fas fa-clock text-muted me-1"></i> {{ service.duration }} minutes</p>
+                                </div>
+                                <div>
+                                    <p class="service-price">{{ service.price_range }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white border-0">
+                            <a href="{{ url_for('list_mechanics') }}?service={{ service.id }}" class="btn btn-primary w-100">
+                                <i class="fas fa-wrench me-1"></i> Find Mechanic for This Service
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <h4 class="alert-heading">No services found!</h4>
+                    <p>We couldn't find any services matching your criteria. Please try adjusting your filters or check back later.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- FAQs Section -->
+<section class="bg-light py-5">
+    <div class="container">
+        <h2 class="text-center mb-4">Frequently Asked Questions</h2>
+        
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="accordion" id="servicesFaq">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingOne">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                How do mobile mechanics work?
+                            </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#servicesFaq">
+                            <div class="accordion-body">
+                                Mobile mechanics bring the repair shop to you. They arrive at your location (home, office, or wherever your car is) with all the necessary tools and parts to perform the repair or service on-site. This saves you time and the hassle of driving to a repair shop.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                What types of repairs can be done on-site?
+                            </button>
+                        </h2>
+                        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#servicesFaq">
+                            <div class="accordion-body">
+                                Most routine maintenance and many common repairs can be completed on-site, including oil changes, battery replacements, brake repairs, starter and alternator replacements, diagnostic services, and more. Some complex repairs that require special equipment or a lift may need to be done at a shop.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingThree">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                Are the prices comparable to traditional repair shops?
+                            </button>
+                        </h2>
+                        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#servicesFaq">
+                            <div class="accordion-body">
+                                Yes, our prices are competitive with traditional repair shops. While there might be a small convenience fee for the mobile service, you're saving time and potentially money on towing or transportation costs. Our mechanics provide upfront pricing before any work begins.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingFour">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                What if my car needs parts that the mechanic doesn't have?
+                            </button>
+                        </h2>
+                        <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#servicesFaq">
+                            <div class="accordion-body">
+                                Our mechanics bring common parts for your specific service. If additional parts are needed, they can often acquire them same-day or schedule a follow-up appointment. Before your appointment, providing accurate details about your vehicle and the issue helps ensure the mechanic brings the right parts.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingFive">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                                Do you offer warranties on repairs?
+                            </button>
+                        </h2>
+                        <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive" data-bs-parent="#servicesFaq">
+                            <div class="accordion-body">
+                                Yes, all repairs come with a standard warranty on parts and labor. The specific warranty period depends on the type of service performed. Details will be provided on your invoice after the service is completed.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

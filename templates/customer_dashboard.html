@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+
+{% block title %}My Dashboard - Harare Mobile Mechanics{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-3">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-user-circle fa-5x text-primary"></i>
+                    </div>
+                    <h5 class="card-title mb-1">{{ user.name }}</h5>
+                    <p class="text-muted small mb-3">{{ user.email }}</p>
+                    <div class="d-grid">
+                        <a href="#" class="btn btn-outline-primary btn-sm">Edit Profile</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="list-group mb-4">
+                <a href="#upcoming" class="list-group-item list-group-item-action active dashboard-tab" data-target="upcoming-bookings">
+                    <i class="fas fa-calendar-alt me-2"></i> Upcoming Bookings
+                </a>
+                <a href="#history" class="list-group-item list-group-item-action dashboard-tab" data-target="booking-history">
+                    <i class="fas fa-history me-2"></i> Booking History
+                </a>
+                <a href="#vehicles" class="list-group-item list-group-item-action dashboard-tab" data-target="my-vehicles">
+                    <i class="fas fa-car me-2"></i> My Vehicles
+                </a>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Need Help?</h5>
+                    <p class="card-text small">Having issues with a booking or mechanic?</p>
+                    <div class="d-grid">
+                        <a href="#" class="btn btn-primary">Contact Support</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-lg-9">
+            <!-- Alert Container -->
+            <div id="alert-container"></div>
+            
+            <!-- Dashboard Summary -->
+            <div class="dashboard-summary mb-4">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="stat-box">
+                            <div class="stat-number">{{ upcoming_bookings|length }}</div>
+                            <div class="stat-label">Upcoming Bookings</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-box">
+                            <div class="stat-number">{{ past_bookings|length }}</div>
+                            <div class="stat-label">Past Bookings</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-box">
+                            <div class="stat-number">{{ vehicles|length }}</div>
+                            <div class="stat-label">Registered Vehicles</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Upcoming Bookings -->
+            <div id="upcoming-bookings" class="tab-content upcoming-bookings">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3>Upcoming Bookings</h3>
+                    <a href="{{ url_for('mechanics_list') }}" class="btn btn-primary">Book New Service</a>
+                </div>
+                
+                {% if upcoming_bookings %}
+                    {% for booking in upcoming_bookings %}
+                    <div class="card mb-3 booking-item" data-date="{{ booking.booking_date }}">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-9">
+                                    <h5 class="card-title mb-1">{{ booking.service_name }}</h5>
+                                    <p class="text-muted mb-2">
+                                        <span class="badge booking-status {% if booking.status == 'Pending' %}badge-pending{% elif booking.status == 'Confirmed' %}badge-confirmed{% elif booking.status == 'Completed' %}badge-completed{% else %}badge-cancelled{% endif %}">
+                                            {{ booking.status }}
+                                        </span>
+                                        <span class="ms-2">
+                                            <i class="fas fa-calendar-alt me-1"></i> {{ booking.booking_date }} at {{ booking.booking_time }}
+                                        </span>
+                                    </p>
+                                    <p class="mb-1"><strong>Mechanic:</strong> {{ booking.mechanic_name }}</p>
+                                    <p class="mb-1"><strong>Vehicle:</strong> {{ booking.vehicle_details }}</p>
+                                    {% if booking.issue_description %}
+                                    <p class="mb-0"><strong>Issue:</strong> {{ booking.issue_description|truncate(100) }}</p>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-3 text-md-end mt-3 mt-md-0">
+                                    {% if booking.status == 'Pending' or booking.status == 'Confirmed' %}
+                                    <div class="booking-actions">
+                                        <button class="btn btn-sm btn-outline-danger mb-2" data-booking-id="{{ booking.id }}" data-status="Cancel">
+                                            <i class="fas fa-times me-1"></i> Cancel
+                                        </button>
+                                        <a href="#" class="btn btn-sm btn-outline-primary d-block">
+                                            <i class="fas fa-edit me-1"></i> Reschedule
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-calendar-day fa-3x text-muted mb-3"></i>
+                        <h4>No upcoming bookings</h4>
+                        <p>You don't have any scheduled services.</p>
+                        <a href="{{ url_for('mechanics_list') }}" class="btn btn-primary">Book a Service</a>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Booking History -->
+            <div id="booking-history" class="tab-content" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3>Booking History</h3>
+                    <select id="booking-filter" class="form-select" style="width: auto;">
+                        <option value="all">All Status</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+                
+                {% if past_bookings %}
+                    {% for booking in past_bookings %}
+                    <div class="card mb-3 booking-item {{ booking.status|lower }}">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-9">
+                                    <h5 class="card-title mb-1">{{ booking.service_name }}</h5>
+                                    <p class="text-muted mb-2">
+                                        <span class="badge booking-status {% if booking.status == 'Pending' %}badge-pending{% elif booking.status == 'Confirmed' %}badge-confirmed{% elif booking.status == 'Completed' %}badge-completed{% else %}badge-cancelled{% endif %}">
+                                            {{ booking.status }}
+                                        </span>
+                                        <span class="ms-2">
+                                            <i class="fas fa-calendar-alt me-1"></i> {{ booking.booking_date }} at {{ booking.booking_time }}
+                                        </span>
+                                    </p>
+                                    <p class="mb-1"><strong>Mechanic:</strong> {{ booking.mechanic_name }}</p>
+                                    <p class="mb-1"><strong>Vehicle:</strong> {{ booking.vehicle_details }}</p>
+                                    {% if booking.issue_description %}
+                                    <p class="mb-0"><strong>Issue:</strong> {{ booking.issue_description|truncate(100) }}</p>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-3 text-md-end mt-3 mt-md-0">
+                                    {% if booking.status == 'Completed' %}
+                                    <a href="#" class="btn btn-sm btn-outline-primary mb-2 d-block">
+                                        <i class="fas fa-star me-1"></i> Leave Review
+                                    </a>
+                                    <a href="#" class="btn btn-sm btn-outline-success d-block">
+                                        <i class="fas fa-redo me-1"></i> Book Again
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                        <h4>No booking history</h4>
+                        <p>You haven't completed any bookings yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- My Vehicles -->
+            <div id="my-vehicles" class="tab-content" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3>My Vehicles</h3>
+                    <a href="{{ url_for('add_vehicle') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> Add Vehicle
+                    </a>
+                </div>
+                
+                <div class="row">
+                    {% if vehicles %}
+                        {% for vehicle in vehicles %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title mb-1">{{ vehicle.make }} {{ vehicle.model }}</h5>
+                                    <p class="text-muted mb-3">{{ vehicle.year }} • {{ vehicle.license_plate }}</p>
+                                    
+                                    <div class="d-flex justify-content-between mt-3">
+                                        <a href="#" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit me-1"></i> Edit
+                                        </a>
+                                        <a href="{{ url_for('mechanics_list') }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-calendar-plus me-1"></i> Book Service
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-12">
+                            <div class="text-center py-5">
+                                <i class="fas fa-car fa-3x text-muted mb-3"></i>
+                                <h4>No vehicles registered</h4>
+                                <p>Add your vehicles to make booking easier.</p>
+                                <a href="{{ url_for('add_vehicle') }}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-1"></i> Add Vehicle
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/bookings.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Dashboard tabs logic
+        const dashboardTabs = document.querySelectorAll('.dashboard-tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        dashboardTabs.forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all tabs
+                dashboardTabs.forEach(t => t.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                this.classList.add('active');
+                
+                // Hide all tab contents
+                tabContents.forEach(content => content.style.display = 'none');
+                
+                // Show the corresponding tab content
+                const targetId = this.getAttribute('data-target');
+                document.getElementById(targetId).style.display = 'block';
+            });
+        });
+    });
+</script>
+{% endblock %}

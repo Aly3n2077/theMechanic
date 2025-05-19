@@ -1,0 +1,407 @@
+:root {
+    --primary: #2B60DE;
+    --secondary: #FF6B6B;
+    --background: #F8F9FA;
+    --text: #333333;
+    --success: #2ECC71;
+    --light-gray: #E9ECEF;
+    --medium-gray: #CED4DA;
+    --white: #FFFFFF;
+    --danger: #DC3545;
+    --warning: #FFC107;
+    --info: #17A2B8;
+}
+
+body {
+    font-family: 'Poppins', 'Open Sans', sans-serif;
+    background-color: var(--background);
+    color: var(--text);
+    line-height: 1.6;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* Navbar styles */
+.navbar {
+    background-color: var(--white);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.nav-link {
+    color: var(--text);
+    font-weight: 500;
+}
+
+.nav-link:hover, .nav-link:focus {
+    color: var(--primary);
+}
+
+.navbar .active {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* Button styles */
+.btn {
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-primary:hover, .btn-primary:focus {
+    background-color: #224db8;
+    border-color: #224db8;
+}
+
+.btn-secondary {
+    background-color: var(--secondary);
+    border-color: var(--secondary);
+}
+
+.btn-secondary:hover, .btn-secondary:focus {
+    background-color: #ff5252;
+    border-color: #ff5252;
+}
+
+.btn-success {
+    background-color: var(--success);
+    border-color: var(--success);
+}
+
+.btn-success:hover, .btn-success:focus {
+    background-color: #27ae60;
+    border-color: #27ae60;
+}
+
+.btn-outline-primary {
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-outline-primary:hover, .btn-outline-primary:focus {
+    background-color: var(--primary);
+    color: white;
+}
+
+/* Card styles */
+.card {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.card-header {
+    background-color: var(--white);
+    border-bottom: 1px solid var(--light-gray);
+    padding: 16px;
+}
+
+.card-body {
+    padding: 16px;
+}
+
+.card-footer {
+    background-color: var(--white);
+    border-top: 1px solid var(--light-gray);
+    padding: 16px;
+}
+
+/* Mechanic card */
+.mechanic-card {
+    transition: transform 0.3s ease;
+}
+
+.mechanic-card:hover {
+    transform: translateY(-5px);
+}
+
+.mechanic-card .card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+.mechanic-rating {
+    color: var(--warning);
+}
+
+/* Service card */
+.service-card {
+    height: 100%;
+}
+
+.service-card .card-title {
+    color: var(--primary);
+}
+
+.service-price {
+    font-weight: 600;
+    color: var(--secondary);
+}
+
+/* Form styles */
+.form-control {
+    border-radius: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--medium-gray);
+}
+
+.form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.25rem rgba(43, 96, 222, 0.25);
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+/* Hero section */
+.hero-section {
+    background-color: var(--primary);
+    color: white;
+    padding: 60px 0;
+    margin-bottom: 40px;
+}
+
+.hero-section h1 {
+    color: white;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.hero-section p {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+}
+
+/* Features section */
+.features-section {
+    padding: 60px 0;
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    color: var(--primary);
+    margin-bottom: 20px;
+}
+
+/* Appointment status badges */
+.badge-pending {
+    background-color: var(--warning);
+    color: var(--text);
+}
+
+.badge-confirmed {
+    background-color: var(--info);
+    color: white;
+}
+
+.badge-completed {
+    background-color: var(--success);
+    color: white;
+}
+
+.badge-cancelled {
+    background-color: var(--danger);
+    color: white;
+}
+
+/* Dashboard */
+.dashboard-header {
+    margin-bottom: 30px;
+}
+
+.dashboard-stats {
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    color: white;
+}
+
+.stat-card.primary {
+    background-color: var(--primary);
+}
+
+.stat-card.secondary {
+    background-color: var(--secondary);
+}
+
+.stat-card.success {
+    background-color: var(--success);
+}
+
+.stat-card.info {
+    background-color: var(--info);
+}
+
+.stat-card h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: white;
+}
+
+.stat-card p {
+    margin-bottom: 0;
+    opacity: 0.8;
+}
+
+/* Footer */
+footer {
+    background-color: var(--text);
+    color: var(--white);
+    padding: 40px 0 20px;
+    margin-top: 60px;
+}
+
+footer h5 {
+    color: var(--white);
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+footer ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+footer li {
+    margin-bottom: 10px;
+}
+
+footer a {
+    color: var(--white);
+    opacity: 0.8;
+    text-decoration: none;
+}
+
+footer a:hover {
+    opacity: 1;
+    color: var(--secondary);
+}
+
+.copyright {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+    opacity: 0.7;
+}
+
+/* Testimonials */
+.testimonial-card {
+    border-left: 4px solid var(--primary);
+}
+
+.testimonial-card .card-body {
+    padding: 20px;
+}
+
+.testimonial-rating {
+    color: var(--warning);
+    margin-bottom: 10px;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 40px 0;
+    }
+    
+    .features-section {
+        padding: 40px 0;
+    }
+    
+    .btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
+
+/* Availability calendar */
+.time-slot {
+    display: inline-block;
+    padding: 8px 12px;
+    margin: 5px;
+    border-radius: 4px;
+    border: 1px solid var(--medium-gray);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.time-slot:hover {
+    background-color: var(--light-gray);
+}
+
+.time-slot.selected {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.time-slot.unavailable {
+    opacity: 0.5;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+/* About page */
+.team-member {
+    text-align: center;
+}
+
+.team-member img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 15px;
+}
+
+/* Contact page */
+.contact-info-item {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+.contact-info-item i {
+    font-size: 1.5rem;
+    color: var(--primary);
+    margin-right: 15px;
+}
+
+/* Flatpickr styles override */
+.flatpickr-day.selected {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+
+.flatpickr-day.today {
+    border-color: var(--primary) !important;
+}
+
+.flatpickr-day:hover {
+    background: var(--light-gray) !important;
+}
