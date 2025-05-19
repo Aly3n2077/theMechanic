@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Vehicle Listing - Harare Mobile Mechanics{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('vehicle_marketplace') }}">Marketplace</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('my_vehicle_listings') }}">My Listings</a></li>
+                    <li class="breadcrumb-item active">Edit Listing</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">Edit Vehicle Listing</h2>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" enctype="multipart/form-data">
+                        {{ form.csrf_token }}
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h4>Vehicle Information</h4>
+                                <hr>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="make" class="form-label">Make *</label>
+                                    {{ form.make(class="form-control") }}
+                                    {% if form.make.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.make.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="model" class="form-label">Model *</label>
+                                    {{ form.model(class="form-control") }}
+                                    {% if form.model.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.model.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="year" class="form-label">Year *</label>
+                                    {{ form.year(class="form-control") }}
+                                    {% if form.year.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.year.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="price" class="form-label">Price ($) *</label>
+                                    {{ form.price(class="form-control") }}
+                                    {% if form.price.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.price.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="condition" class="form-label">Condition *</label>
+                                    {{ form.condition(class="form-select") }}
+                                    {% if form.condition.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.condition.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="mileage" class="form-label">Mileage (km) *</label>
+                                    {{ form.mileage(class="form-control") }}
+                                    {% if form.mileage.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.mileage.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="color" class="form-label">Color *</label>
+                                    {{ form.color(class="form-control") }}
+                                    {% if form.color.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.color.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="transmission" class="form-label">Transmission *</label>
+                                    {{ form.transmission(class="form-select") }}
+                                    {% if form.transmission.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.transmission.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="fuel_type" class="form-label">Fuel Type *</label>
+                                    {{ form.fuel_type(class="form-select") }}
+                                    {% if form.fuel_type.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.fuel_type.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h4>Additional Information</h4>
+                                <hr>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Description *</label>
+                                    {{ form.description(class="form-control", rows=5) }}
+                                    {% if form.description.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.description.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="features" class="form-label">Features</label>
+                                    {{ form.features(class="form-control") }}
+                                    <div class="form-text">List notable features of the vehicle, separated by commas.</div>
+                                    {% if form.features.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.features.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if vehicle.images and vehicle.images|length > 0 %}
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h4>Current Images</h4>
+                                <hr>
+                                <div class="row row-cols-1 row-cols-md-4 g-3">
+                                    {% for image in vehicle.images %}
+                                    <div class="col">
+                                        <div class="card h-100">
+                                            <img src="{{ image }}" class="card-img-top" alt="Vehicle image">
+                                            <div class="card-body">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="keep_image_{{ loop.index }}" name="keep_images" value="{{ loop.index0 }}" checked>
+                                                    <label class="form-check-label" for="keep_image_{{ loop.index }}">
+                                                        Keep this image
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="images" class="form-label">Add New Images</label>
+                                    {{ form.images(class="form-control") }}
+                                    <div class="form-text">Upload additional images of your vehicle</div>
+                                    {% if form.images.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.images.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-12 d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg">Update Listing</button>
+                                <a href="{{ url_for('vehicle_listing_detail', vehicle_id=vehicle.id) }}" class="btn btn-outline-secondary">Cancel</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

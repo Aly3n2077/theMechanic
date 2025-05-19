@@ -663,3 +663,284 @@ def register_routes(app):
             'mechanics': mechanic_list,
             'total_found': len(mechanic_list)
         })
+        
+    # Vehicle Marketplace Routes
+    @app.route('/marketplace')
+    def vehicle_marketplace():
+        """Main marketplace page for vehicle listings"""
+        form = VehicleSearchForm()
+        
+        # Get filter parameters from request
+        filters = {}
+        make = request.args.get('make')
+        if make:
+            filters['make'] = make
+            
+        model = request.args.get('model')
+        if model:
+            filters['model'] = model
+            
+        min_year = request.args.get('min_year')
+        if min_year and min_year.isdigit():
+            filters['min_year'] = int(min_year)
+            
+        max_year = request.args.get('max_year')
+        if max_year and max_year.isdigit():
+            filters['max_year'] = int(max_year)
+            
+        min_price = request.args.get('min_price')
+        if min_price:
+            try:
+                filters['min_price'] = float(min_price)
+            except ValueError:
+                pass
+                
+        max_price = request.args.get('max_price')
+        if max_price:
+            try:
+                filters['max_price'] = float(max_price)
+            except ValueError:
+                pass
+                
+        condition = request.args.get('condition')
+        if condition:
+            filters['condition'] = condition
+        
+        # Get vehicle listings with filters
+        vehicles = data.get_vehicles_for_sale(filters)
+        
+        # Pre-populate form with current filter values
+        make = request.args.get('make')
+        if make:
+            form.make.data = make
+            
+        model = request.args.get('model')
+        if model:
+            form.model.data = model
+            
+        min_year = request.args.get('min_year')
+        if min_year:
+            try:
+                form.min_year.data = int(min_year)
+            except ValueError:
+                pass
+                
+        max_year = request.args.get('max_year')
+        if max_year:
+            try:
+                form.max_year.data = int(max_year)
+            except ValueError:
+                pass
+                
+        min_price = request.args.get('min_price')
+        if min_price:
+            try:
+                form.min_price.data = float(min_price)
+            except ValueError:
+                pass
+                
+        max_price = request.args.get('max_price')
+        if max_price:
+            try:
+                form.max_price.data = float(max_price)
+            except ValueError:
+                pass
+                
+        condition = request.args.get('condition')
+        if condition:
+            form.condition.data = condition
+        
+        return render_template('marketplace.html', 
+                              vehicles=vehicles,
+                              form=form)
+    
+    @app.route('/marketplace/vehicle/<int:vehicle_id>')
+    def vehicle_listing_detail(vehicle_id):
+        """Show detailed page for a specific vehicle listing"""
+        vehicle = data.get_vehicle_for_sale_by_id(vehicle_id)
+        if not vehicle:
+            flash('Vehicle listing not found.', 'danger')
+            return redirect(url_for('vehicle_marketplace'))
+        
+        # Get seller information
+        seller = data.get_user_by_id(vehicle.seller_id)
+        
+        return render_template('vehicle_detail.html', 
+                              vehicle=vehicle,
+                              seller=seller)
+    
+    @app.route('/marketplace/my-listings')
+    def my_vehicle_listings():
+        """View all user's vehicle listings"""
+        if 'user_id' not in session:
+            flash('Please log in to view your vehicle listings.', 'warning')
+            return redirect(url_for('login', next=request.path))
+        
+        vehicles = data.get_user_vehicle_listings(session['user_id'])
+        return render_template('my_listings.html', vehicles=vehicles)
+    
+    @app.route('/marketplace/create', methods=['GET', 'POST'])
+    def create_vehicle_listing():
+        """Create a new vehicle listing"""
+        if 'user_id' not in session:
+            flash('Please log in to create a vehicle listing.', 'warning')
+            return redirect(url_for('login', next=request.path))
+        
+        form = VehicleListingForm()
+        
+        if form.validate_on_submit():
+            # Process features (comma separated string to list)
+            features = []
+            if form.features.data:
+                features = [f.strip() for f in form.features.data.split(',') if f.strip()]
+            
+            # TODO: Handle image uploads
+            images = []
+            
+            # Create the vehicle listing
+            vehicle = data.create_vehicle_listing(
+                seller_id=session['user_id'],
+                make=form.make.data,
+                model=form.model.data,
+                year=form.year.data,
+                price=form.price.data,
+                condition=form.condition.data,
+                mileage=form.mileage.data,
+                color=form.color.data,
+                transmission=form.transmission.data,
+                fuel_type=form.fuel_type.data,
+                description=form.description.data,
+                features=features,
+                images=images
+            )
+            
+            flash('Vehicle listing created successfully!', 'success')
+            return redirect(url_for('vehicle_listing_detail', vehicle_id=vehicle.id))
+        
+        return render_template('create_listing.html', form=form)
+    
+    @app.route('/marketplace/edit/<int:vehicle_id>', methods=['GET', 'POST'])
+    def edit_vehicle_listing(vehicle_id):
+        """Edit an existing vehicle listing"""
+        if 'user_id' not in session:
+            flash('Please log in to edit a vehicle listing.', 'warning')
+            return redirect(url_for('login', next=request.path))
+        
+        vehicle = data.get_vehicle_for_sale_by_id(vehicle_id)
+        if not vehicle:
+            flash('Vehicle listing not found.', 'danger')
+            return redirect(url_for('my_vehicle_listings'))
+        
+        # Verify ownership
+        if vehicle.seller_id != session['user_id']:
+            flash('You do not have permission to edit this listing.', 'danger')
+            return redirect(url_for('my_vehicle_listings'))
+        
+        form = VehicleListingForm()
+        
+        if request.method == 'GET':
+            # Pre-populate form with current values
+            form.make.data = vehicle.make
+            form.model.data = vehicle.model
+            form.year.data = vehicle.year
+            form.price.data = vehicle.price
+            form.condition.data = vehicle.condition
+            form.mileage.data = vehicle.mileage
+            form.color.data = vehicle.color
+            form.transmission.data = vehicle.transmission
+            form.fuel_type.data = vehicle.fuel_type
+            form.description.data = vehicle.description
+            form.features.data = ', '.join(vehicle.features)
+        
+        if form.validate_on_submit():
+            # Process features (comma separated string to list)
+            features = []
+            if form.features.data:
+                features = [f.strip() for f in form.features.data.split(',') if f.strip()]
+            
+            # TODO: Handle image uploads
+            
+            # Update the vehicle listing
+            data.update_vehicle_listing(
+                vehicle_id=vehicle_id,
+                make=form.make.data,
+                model=form.model.data,
+                year=form.year.data,
+                price=form.price.data,
+                condition=form.condition.data,
+                mileage=form.mileage.data,
+                color=form.color.data,
+                transmission=form.transmission.data,
+                fuel_type=form.fuel_type.data,
+                description=form.description.data,
+                features=features
+            )
+            
+            flash('Vehicle listing updated successfully!', 'success')
+            return redirect(url_for('vehicle_listing_detail', vehicle_id=vehicle_id))
+        
+        return render_template('edit_listing.html', form=form, vehicle=vehicle)
+    
+    @app.route('/marketplace/delete/<int:vehicle_id>', methods=['POST'])
+    def delete_vehicle_listing_route():
+        """Delete a vehicle listing"""
+        if 'user_id' not in session:
+            flash('Please log in to delete a vehicle listing.', 'warning')
+            return redirect(url_for('login'))
+        
+        vehicle_id = request.form.get('vehicle_id')
+        if not vehicle_id or not vehicle_id.isdigit():
+            flash('Invalid vehicle ID.', 'danger')
+            return redirect(url_for('my_vehicle_listings'))
+        
+        vehicle_id = int(vehicle_id)
+        vehicle = data.get_vehicle_for_sale_by_id(vehicle_id)
+        
+        if not vehicle:
+            flash('Vehicle listing not found.', 'danger')
+            return redirect(url_for('my_vehicle_listings'))
+        
+        # Verify ownership
+        if vehicle.seller_id != session['user_id']:
+            flash('You do not have permission to delete this listing.', 'danger')
+            return redirect(url_for('my_vehicle_listings'))
+        
+        # Delete the listing
+        data.delete_vehicle_listing(vehicle_id)
+        
+        flash('Vehicle listing deleted successfully!', 'success')
+        return redirect(url_for('my_vehicle_listings'))
+    
+    @app.route('/marketplace/mark-sold/<int:vehicle_id>', methods=['POST'])
+    def mark_vehicle_sold():
+        """Mark a vehicle as sold"""
+        if 'user_id' not in session:
+            flash('Please log in to mark a vehicle as sold.', 'warning')
+            return redirect(url_for('login'))
+        
+        vehicle_id = request.form.get('vehicle_id')
+        if not vehicle_id or not vehicle_id.isdigit():
+            flash('Invalid vehicle ID.', 'danger')
+            return redirect(url_for('my_vehicle_listings'))
+        
+        vehicle_id = int(vehicle_id)
+        vehicle = data.get_vehicle_for_sale_by_id(vehicle_id)
+        
+        if not vehicle:
+            flash('Vehicle listing not found.', 'danger')
+            return redirect(url_for('my_vehicle_listings'))
+        
+        # Verify ownership
+        if vehicle.seller_id != session['user_id']:
+            flash('You do not have permission to mark this vehicle as sold.', 'danger')
+            return redirect(url_for('my_vehicle_listings'))
+        
+        # Mark as sold
+        buyer_id = request.form.get('buyer_id')
+        if buyer_id and buyer_id.isdigit():
+            data.mark_vehicle_as_sold(vehicle_id, int(buyer_id))
+        else:
+            data.mark_vehicle_as_sold(vehicle_id)
+        
+        flash('Vehicle marked as sold successfully!', 'success')
+        return redirect(url_for('my_vehicle_listings'))
