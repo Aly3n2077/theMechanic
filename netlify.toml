@@ -1,0 +1,17 @@
+[build]
+  # 1. Print Docker version (will fail if missing)
+  # 2. Then build your Flask container
+  command = "docker --version && docker build -t app ."
+  publish = "."
+  functions = "netlify/functions"
+
+[plugins]
+  package = "@netlify/plugin-docker"
+
+[context.production.environment]
+  DATABASE_URL     = "postgres://USER:PASS@HOST:5432/DBNAME"
+  FLASK_SECRET_KEY = "super_secret_key"
+
+[dev]
+  command = "python main.py"
+  port    = 5000
